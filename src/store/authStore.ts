@@ -8,7 +8,7 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
   clearError: () => void;
@@ -39,7 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     } catch (error: any) {
       set({
-        error: error.message || 'Failed to login',
+        error: error.message,
         isAuthenticated: false
       });
       throw error;
@@ -48,10 +48,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  register: async (name, email, password) => {
+  register: async (firstName, lastName, email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.register(name, email, password);
+      const response = await api.register(firstName, lastName, email, password);
       set({
         user: response.user,
         isAuthenticated: true,
@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     } catch (error: any) {
       set({
-        error: error.message || 'Failed to register',
+        error: error.message,
         isAuthenticated: false
       });
       throw error;

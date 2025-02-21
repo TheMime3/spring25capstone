@@ -8,12 +8,13 @@ import { useApi } from '../hooks/useApi';
 const Register = () => {
   const navigate = useNavigate();
   const { isAuthenticated, register } = useAuthStore();
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
   const { execute: executeRegister, error, isLoading, clearError } = useApi(
-    async () => register(name, email, password),
+    async () => register(firstName, lastName, email, password),
     {
       onSuccess: () => navigate('/dashboard'),
       retryCount: 1
@@ -42,26 +43,44 @@ const Register = () => {
 
           {error && (
             <div className="bg-red-50 text-red-500 p-4 rounded-md text-center">
-              {error.message}
+              {error}
             </div>
           )}
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
-              <div>
-                <label htmlFor="name" className="sr-only">Full name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Full name"
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="firstName" className="sr-only">First name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      required
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="First name"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="sr-only">Last name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      required
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Last name"
+                    />
+                  </div>
                 </div>
               </div>
 

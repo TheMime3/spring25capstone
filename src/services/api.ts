@@ -11,11 +11,10 @@ export class ApiService {
 
   private constructor() {
     this.api = axios.create({
-      baseURL: 'http://localhost:5000', // Replace with your API IP
+      baseURL: 'http://localhost:5000',
       withCredentials: true,
       headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': Cookies.get('csrf-token'),
+        'Content-Type': 'application/json'
       },
     });
 
@@ -47,45 +46,11 @@ export class ApiService {
         const originalRequest = error.config;
         if (!originalRequest) return Promise.reject(error);
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          if (this.isRefreshing) {
-            return new Promise((resolve) => {
-              this.refreshSubscribers.push((token: string) => {
-                originalRequest.headers.Authorization = `Bearer ${token}`;
-                resolve(this.api(originalRequest));
-              });
-            });
-          }
-
-          originalRequest._retry = true;
-          this.isRefreshing = true;
-
-          try {
-            const response = await this.refreshToken();
-            const { accessToken } = response.data;
-            
-            Cookies.set('accessToken', accessToken, { 
-              secure: true,
-              sameSite: 'strict'
-            });
-
-            this.refreshSubscribers.forEach((callback) => callback(accessToken));
-            this.refreshSubscribers = [];
-            
-            return this.api(originalRequest);
-          } catch (refreshError) {
-            useAuthStore.getState().logout();
-            return Promise.reject(refreshError);
-          } finally {
-            this.isRefreshing = false;
-          }
-        }
-
-        // Handle other errors
+        // Handle API errors
         const apiError = {
           message: error.response?.data?.message || 'An error occurred',
-          code: error.response?.data?.code,
-          status: error.response?.status
+          status: error.response?.status || 500,
+          code: error.response?.data?.code || 'UNKNOWN_ERROR'
         };
 
         return Promise.reject(apiError);
@@ -93,73 +58,56 @@ export class ApiService {
     );
   }
 
-  private async refreshToken() {
-    const refreshToken = Cookies.get('refreshToken');
-    return this.api.post('/auth/refresh-token', { refreshToken });
-  }
-
-  private isTokenExpired(token: string): boolean {
+  public async login(email: string, password: string) {
     try {
-      const decoded = jwtDecode(token);
-      if (!decoded.exp) return true;
-      return decoded.exp * 1000 < Date.now();
-    } catch {
-      return true;
+      const response = await this.api.post('/auth/login', { email, password });
+      return response.data;
+    } catch (error: any) {
+      throw {
+        message: error.message || 'Login failed',
+        status: error.status || 500
+      };
     }
   }
 
-  public async login(email: string, password: string) {
-    const response = await this.api.post('/auth/login', { email, password });
-    this.handleAuthResponse(response.data);
-    return response.data;
-  }
-
-  public async register(name: string, email: string, password: string) {
-    const response = await this.api.post('/auth/register', { name, email, password });
-    this.handleAuthResponse(response.data);
-    return response.data;
+  public async register(firstName: string, lastName: string, email: string, password: string) {
+    try {
+      const response = await this.api.post('/auth/register', {
+        firstName,
+        lastName,
+        email,
+        password
+      });
+      return response.data;
+    } catch (error: any) {
+      throw {
+        message: error.message || 'Registration failed',
+        status: error.status || 500
+      };
+    }
   }
 
   public async logout() {
     try {
       await this.api.post('/auth/logout');
-    } finally {
-      Cookies.remove('accessToken');
-      Cookies.remove('refreshToken');
-      Cookies.remove('csrf-token');
+    } catch (error: any) {
+      throw {
+        message: error.message || 'Logout failed',
+        status: error.status || 500
+      };
     }
   }
 
   public async getProfile() {
-    return this.api.get('/user/profile');
-  }
-
-  public async updateProfile(data: Partial<User>) {
-    return this.api.put('/user/profile', data);
-  }
-
-  public async changePassword(currentPassword: string, newPassword: string) {
-    return this.api.put('/user/change-password', {
-      currentPassword,
-      newPassword
-    });
-  }
-
-  private handleAuthResponse(data: AuthResponse) {
-    const { accessToken, refreshToken, user } = data;
-    
-    Cookies.set('accessToken', accessToken, {
-      secure: true,
-      sameSite: 'strict'
-    });
-    
-    Cookies.set('refreshToken', refreshToken, {
-      secure: true,
-      sameSite: 'strict'
-    });
-
-    // Update auth store
-    useAuthStore.getState().setUser(user);
+    try {
+      const response = await this.api.get('/user/profile');
+      return response.data;
+    } catch (error: any) {
+      throw {
+        message: error.message || 'Failed to fetch profile',
+        status: error.status || 500
+      };
+    }
   }
 }
 

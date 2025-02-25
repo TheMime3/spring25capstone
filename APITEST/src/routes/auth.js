@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 import { generateTokens } from '../utils/tokens.js';
+import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -37,6 +38,7 @@ router.post('/register', async (req, res, next) => {
 
     // Log the registration event
     await User.logAuditEvent(user.id, 'register', req);
+    logger.audit(user.id, 'REGISTER', `New user registered: ${email}`);
 
     res.status(201).json({
       user: {
@@ -64,6 +66,7 @@ router.post('/login', async (req, res, next) => {
 
     const user = await User.findByEmail(email);
     if (!user || !(await User.comparePassword(user.password, password))) {
+      logger.warn(`Failed login attempt for email: ${email}`);
       throw new ApiError('Invalid credentials', 401);
     }
 
@@ -75,6 +78,7 @@ router.post('/login', async (req, res, next) => {
 
     // Log the login event
     await User.logAuditEvent(user.id, 'login', req);
+    logger.audit(user.id, 'LOGIN', `User logged in: ${email}`);
 
     res.json({
       user: {
@@ -102,6 +106,7 @@ router.post('/refresh-token', async (req, res, next) => {
 
     const tokenData = await User.findRefreshToken(refreshToken);
     if (!tokenData) {
+      logger.warn('Invalid refresh token attempt');
       throw new ApiError('Invalid or expired refresh token', 401);
     }
 
@@ -119,6 +124,7 @@ router.post('/refresh-token', async (req, res, next) => {
 
     // Log the token refresh event
     await User.logAuditEvent(user.id, 'token_refresh', req);
+    logger.audit(user.id, 'TOKEN_REFRESH', 'Token refreshed successfully');
 
     res.json({
       accessToken,
@@ -140,6 +146,7 @@ router.post('/logout', async (req, res, next) => {
 
     if (userId) {
       await User.logAuditEvent(userId, 'logout', req);
+      logger.audit(userId, 'LOGOUT', 'User logged out');
     }
 
     res.json({ message: 'Logged out successfully' });

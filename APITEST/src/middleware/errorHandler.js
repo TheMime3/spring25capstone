@@ -1,7 +1,9 @@
 import { ApiError } from '../utils/ApiError.js';
+import { logger } from '../utils/logger.js';
 
 export const errorHandler = (err, req, res, next) => {
-  console.error(err);
+  // Log the error
+  logger.error(`${err.message} - ${req.method} ${req.url} - IP: ${req.ip}`);
 
   if (err instanceof ApiError) {
     return res.status(err.status).json({

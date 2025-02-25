@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User } from '../types/auth';
+import { User, ApiError } from '../types/auth';
 import { api } from '../services/api';
 
 interface AuthState {
@@ -58,11 +58,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         error: null
       });
     } catch (error: any) {
+      const apiError: ApiError = {
+        message: error.message || 'Registration failed',
+        status: error.status || 500
+      };
       set({
-        error: error.message,
+        error: apiError.message,
         isAuthenticated: false
       });
-      throw error;
+      throw apiError;
     } finally {
       set({ isLoading: false });
     }

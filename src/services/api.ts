@@ -72,14 +72,20 @@ export class ApiService {
 
   public async register(firstName: string, lastName: string, email: string, password: string) {
     try {
+      // Format the request body to match the API's expected structure
       const response = await this.api.post('/auth/register', {
         firstName,
         lastName,
         email,
         password
       });
+      
+      // Log the response for debugging
+      console.log('Registration response:', response.data);
+      
       return response.data;
     } catch (error: any) {
+      console.error('Registration error:', error);
       throw {
         message: error.message || 'Registration failed',
         status: error.status || 500

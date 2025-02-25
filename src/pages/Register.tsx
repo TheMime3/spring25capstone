@@ -4,6 +4,7 @@ import { UserPlus, User, Mail, Lock } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { useAuthStore } from '../store/authStore';
 import { useApi } from '../hooks/useApi';
+import { ApiError } from '../types/auth';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -29,7 +30,12 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    await executeRegister();
+    try {
+      await executeRegister();
+    } catch (error) {
+      // Error is already handled by useApi hook
+      console.error('Registration failed:', error);
+    }
   };
 
   return (
@@ -43,7 +49,7 @@ const Register = () => {
 
           {error && (
             <div className="bg-red-50 text-red-500 p-4 rounded-md text-center">
-              {error}
+              {error.message}
             </div>
           )}
 

@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import pool from './config/database.js';
+import { logger } from './utils/logger.js';
 
 dotenv.config();
 
@@ -19,6 +20,12 @@ app.use(cors({
   credentials: true
 }));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
+  next();
+});
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
@@ -31,12 +38,14 @@ app.get('/health', async (req, res) => {
   try {
     // Test database connection
     await pool.query('SELECT 1');
+    logger.info('Health check passed');
     res.json({ 
       status: 'ok', 
       database: 'connected',
       timestamp: new Date().toISOString() 
     });
   } catch (error) {
+    logger.error(`Health check failed: ${error.message}`);
     res.status(500).json({ 
       status: 'error', 
       database: 'disconnected',
@@ -48,6 +57,6 @@ app.get('/health', async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`API is accessible at http://localhost:${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
+  logger.info(`API is accessible at http://localhost:${PORT}`);
 });

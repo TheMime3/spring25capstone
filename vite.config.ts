@@ -9,5 +9,6 @@ export default defineConfig({
   server: {
     host: true, // Expose to all network interfaces
     port: 5173,
+    strictPort: true, // Fail if port is already in use
   },
 });

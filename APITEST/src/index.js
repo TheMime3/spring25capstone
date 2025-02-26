@@ -7,6 +7,7 @@ import userRoutes from './routes/user.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import pool from './config/database.js';
 import { logger } from './utils/logger.js';
+import { networkInterfaces } from 'os';
 
 dotenv.config();
 
@@ -15,8 +16,16 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+// Configure CORS to accept requests from any origin on the local network
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if(!origin) return callback(null, true);
+    
+    // Allow requests from any origin in development
+    return callback(null, true);
+  },
   credentials: true
 }));
 
@@ -55,8 +64,36 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Get local IP addresses
+const getLocalIpAddresses = () => {
+  const interfaces = networkInterfaces();
+  const addresses = [];
+  
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Skip internal and non-IPv4 addresses
+      if (iface.family === 'IPv4' && !iface.internal) {
+        addresses.push(iface.address);
+      }
+    }
+  }
+  
+  return addresses;
+};
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
+  const localIps = getLocalIpAddresses();
+  
   logger.info(`Server running on port ${PORT}`);
   logger.info(`API is accessible at http://localhost:${PORT}`);
+  
+  if (localIps.length > 0) {
+    logger.info('For local network access, use any of these URLs:');
+    localIps.forEach(ip => {
+      logger.info(`http://${ip}:${PORT}`);
+    });
+  } else {
+    logger.info('No network interfaces detected for local network access');
+  }
 });

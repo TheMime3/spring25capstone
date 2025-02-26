@@ -78,7 +78,7 @@ A production-ready authentication system with a React frontend and Express.js ba
    DB_PASSWORD=your_password
    JWT_SECRET=your-super-secret-key-change-this
    JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this
-   FRONTEND_URL=http://localhost:5173
+   FRONTEND_URL=*
    ACCESS_TOKEN_EXPIRES_IN=15m
    REFRESH_TOKEN_EXPIRES_IN=7d
    ```
@@ -109,6 +109,43 @@ A production-ready authentication system with a React frontend and Express.js ba
    ```bash
    npm run dev
    ```
+
+## Local Network Demo
+
+This application is configured to be easily shared on your local network for demonstration purposes.
+
+### Running the Demo
+
+1. Make sure your MySQL database is set up and running.
+
+2. Start both the frontend and backend servers with a single command:
+   ```bash
+   npm run start-demo
+   ```
+
+3. The script will display URLs that can be used to access the application:
+   - Local access: http://localhost:5173
+   - Network access: http://YOUR_IP_ADDRESS:5173
+
+4. Share the network access URL with people on your local network.
+
+5. They can access the login page, create accounts, and use the application from their devices.
+
+### How It Works
+
+- The frontend automatically detects the correct API URL based on how it's being accessed
+- The backend accepts requests from any origin on your local network
+- Both servers bind to all network interfaces, making them accessible from other devices
+- The start script displays all available IP addresses that can be used to access the application
+
+### Security Note
+
+The local network demo configuration is intended for demonstration purposes only. For production deployment:
+
+- Restrict CORS to specific origins
+- Use proper SSL/TLS certificates
+- Set strong JWT secrets
+- Configure proper database security
 
 ## Database Schema
 
@@ -316,6 +353,28 @@ Common error codes:
 3. Enable production error logging
 4. Optimize bundle size
 5. Configure CDN (if used)
+
+## Troubleshooting
+
+### Common Issues
+
+#### API Connection Problems
+- Ensure the backend server is running
+- Check that the API URL is correctly configured
+- Verify that CORS is properly set up
+- Check network connectivity between devices
+
+#### Database Connection Issues
+- Verify MySQL is running
+- Check database credentials in `.env`
+- Ensure the database and tables exist
+- Run `npm run setup` to initialize the database
+
+#### Authentication Failures
+- Check that JWT secrets are properly set
+- Verify token expiration times
+- Ensure refresh tokens are being stored correctly
+- Check for clock synchronization issues
 
 ## Contributing
 

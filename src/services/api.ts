@@ -7,8 +7,14 @@ export class ApiService {
   private refreshSubscribers: ((token: string) => void)[] = [];
 
   private constructor() {
+    // Use the environment variable or fallback to the current window location
+    const apiUrl = import.meta.env.VITE_API_URL || 
+                  (window.location.hostname === 'localhost' 
+                    ? 'http://localhost:5000'
+                    : `http://${window.location.hostname}:5000`);
+    
     this.api = axios.create({
-      baseURL: 'http://localhost:5000',
+      baseURL: apiUrl,
       withCredentials: true,
       headers: {
         'Content-Type': 'application/json'

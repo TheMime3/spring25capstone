@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -19,7 +20,8 @@ function App() {
                 <Dashboard />
               </PrivateRoute>
             } />
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
           </Routes>
         </AnimatePresence>
       </Router>

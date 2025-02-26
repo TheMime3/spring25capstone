@@ -1,7 +1,4 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode';
-import { useAuthStore } from '../store/authStore';
 
 export class ApiService {
   private static instance: ApiService;
@@ -31,7 +28,7 @@ export class ApiService {
   private setupInterceptors() {
     this.api.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const token = Cookies.get('accessToken');
+        const token = localStorage.getItem('accessToken');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -53,6 +50,30 @@ export class ApiService {
           code: error.response?.data?.code || 'UNKNOWN_ERROR'
         };
 
+        // If the error is 401 and we're not already refreshing, try to refresh the token
+        if (error.response?.status === 401 && !this.isRefreshing && originalRequest.url !== '/auth/refresh-token') {
+          this.isRefreshing = true;
+          
+          try {
+            const refreshResult = await this.refreshToken();
+            this.isRefreshing = false;
+            
+            // Update the original request with the new token
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${refreshResult.accessToken}`;
+            }
+            
+            // Retry the original request
+            return this.api(originalRequest);
+          } catch (refreshError) {
+            this.isRefreshing = false;
+            // If refresh fails, clear tokens and reject
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            return Promise.reject(apiError);
+          }
+        }
+
         return Promise.reject(apiError);
       }
     );
@@ -61,6 +82,8 @@ export class ApiService {
   public async login(email: string, password: string) {
     try {
       const response = await this.api.post('/auth/login', { email, password });
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
       return response.data;
     } catch (error: any) {
       throw {
@@ -72,7 +95,6 @@ export class ApiService {
 
   public async register(firstName: string, lastName: string, email: string, password: string) {
     try {
-      // Format the request body to match the API's expected structure
       const response = await this.api.post('/auth/register', {
         firstName,
         lastName,
@@ -80,8 +102,8 @@ export class ApiService {
         password
       });
       
-      // Log the response for debugging
-      console.log('Registration response:', response.data);
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
       
       return response.data;
     } catch (error: any) {
@@ -95,8 +117,14 @@ export class ApiService {
 
   public async logout() {
     try {
-      await this.api.post('/auth/logout');
+      const refreshToken = localStorage.getItem('refreshToken');
+      await this.api.post('/auth/logout', { refreshToken });
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
     } catch (error: any) {
+      // Still remove tokens even if the API call fails
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       throw {
         message: error.message || 'Logout failed',
         status: error.status || 500
@@ -111,6 +139,28 @@ export class ApiService {
     } catch (error: any) {
       throw {
         message: error.message || 'Failed to fetch profile',
+        status: error.status || 500
+      };
+    }
+  }
+
+  public async refreshToken() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        throw { message: 'No refresh token available', status: 401 };
+      }
+      
+      const response = await this.api.post('/auth/refresh-token', { refreshToken });
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+      
+      return response.data;
+    } catch (error: any) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      throw {
+        message: error.message || 'Failed to refresh token',
         status: error.status || 500
       };
     }

@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '../utils/api';
+import { api } from '../services/api';
+import { useAuthStore } from '../store/authStore';
 
 interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
 }
 
@@ -11,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -26,7 +28,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, isAuthenticated, isLoading, login, register, logout, setUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,32 +37,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAuth = async () => {
     try {
-      const response = await api.get('/user/me');
-      setUser(response.data);
+      // Check if we have tokens in localStorage
+      const accessToken = localStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken');
+      
+      if (!accessToken || !refreshToken) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        // Try to get user profile with current token
+        const userProfile = await api.getProfile();
+        setUser({
+          id: userProfile.id,
+          firstName: userProfile.firstName || userProfile.first_name,
+          lastName: userProfile.lastName || userProfile.last_name,
+          email: userProfile.email
+        });
+      } catch (error) {
+        // If token is expired, try to refresh
+        try {
+          await api.refreshToken();
+          const userProfile = await api.getProfile();
+          setUser({
+            id: userProfile.id,
+            firstName: userProfile.firstName || userProfile.first_name,
+            lastName: userProfile.lastName || userProfile.last_name,
+            email: userProfile.email
+          });
+        } catch (refreshError) {
+          // If refresh fails, clear tokens
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          setUser(null);
+        }
+      }
     } catch (error) {
+      console.error('Auth check error:', error);
       setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
-    setUser(response.data.user);
-  };
-
-  const register = async (name: string, email: string, password: string) => {
-    const response = await api.post('/auth/register', { name, email, password });
-    setUser(response.data.user);
-  };
-
-  const logout = async () => {
-    await api.post('/auth/logout');
-    setUser(null);
+  const contextValue: AuthContextType = {
+    user,
+    loading: isLoading || loading,
+    login,
+    register,
+    logout
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

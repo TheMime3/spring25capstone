@@ -4,7 +4,6 @@ import { LogIn, Mail, Lock } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { useAuthStore } from '../store/authStore';
 import { useApi } from '../hooks/useApi';
-import { api } from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();

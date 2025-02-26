@@ -4,7 +4,6 @@ import { UserPlus, User, Mail, Lock } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { useAuthStore } from '../store/authStore';
 import { useApi } from '../hooks/useApi';
-import { ApiError } from '../types/auth';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -13,9 +12,15 @@ const Register = () => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   const { execute: executeRegister, error, isLoading, clearError } = useApi(
-    async () => register(firstName, lastName, email, password),
+    async () => {
+      if (password !== confirmPassword) {
+        throw { message: 'Passwords do not match', status: 400 };
+      }
+      await register(firstName, lastName, email, password);
+    },
     {
       onSuccess: () => navigate('/dashboard'),
       retryCount: 1
@@ -120,6 +125,24 @@ const Register = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
                     placeholder="Password"
+                    minLength={6}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Confirm Password"
                     minLength={6}
                   />
                 </div>

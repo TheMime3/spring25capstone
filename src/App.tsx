@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
+import Questionnaire from './pages/Questionnaire';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -18,6 +19,11 @@ function App() {
             <Route path="/dashboard" element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            } />
+            <Route path="/questionnaire" element={
+              <PrivateRoute>
+                <Questionnaire />
               </PrivateRoute>
             } />
             <Route path="/home" element={<Home />} />

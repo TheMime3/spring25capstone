@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/authStore';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import PageTransition from '../components/PageTransition';
@@ -15,6 +15,10 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     executeLogout();
+  };
+
+  const handleStartQuestionnaire = () => {
+    navigate('/questionnaire');
   };
 
   return (
@@ -59,6 +63,16 @@ const Dashboard = () => {
                 </h3>
                 <div className="mt-3 max-w-xl text-sm text-gray-500">
                   <p>You're signed in with {user?.email}</p>
+                </div>
+                
+                <div className="mt-8">
+                  <button
+                    onClick={handleStartQuestionnaire}
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                  >
+                    <ClipboardList className="mr-2 h-5 w-5" />
+                    Start your questionnaire
+                  </button>
                 </div>
               </div>
             </div>

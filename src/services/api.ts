@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { QuestionnaireResponse } from '../types/questionnaire';
 
 export class ApiService {
   private static instance: ApiService;
@@ -167,6 +168,35 @@ export class ApiService {
       localStorage.removeItem('refreshToken');
       throw {
         message: error.message || 'Failed to refresh token',
+        status: error.status || 500
+      };
+    }
+  }
+
+  // New methods for questionnaire
+  public async saveQuestionnaire(data: QuestionnaireResponse) {
+    try {
+      const response = await this.api.post('/user/questionnaire', data);
+      return response.data;
+    } catch (error: any) {
+      throw {
+        message: error.message || 'Failed to save questionnaire',
+        status: error.status || 500
+      };
+    }
+  }
+
+  public async getQuestionnaire() {
+    try {
+      const response = await this.api.get('/user/questionnaire');
+      return response.data;
+    } catch (error: any) {
+      // If 404, it means no questionnaire exists yet
+      if (error.status === 404) {
+        return null;
+      }
+      throw {
+        message: error.message || 'Failed to fetch questionnaire',
         status: error.status || 500
       };
     }

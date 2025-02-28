@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
+import scriptRoutes from './routes/script.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import pool from './config/database.js';
 import { logger } from './utils/logger.js';
@@ -38,6 +39,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
+app.use('/script', scriptRoutes);
 
 // Error handler
 app.use(errorHandler);

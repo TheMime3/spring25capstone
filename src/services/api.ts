@@ -1,5 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { QuestionnaireResponse } from '../types/questionnaire';
+import { ScriptGeneratorState } from '../types/scriptGenerator';
+import { QuestionnaireState } from '../types/questionnaire';
 
 export class ApiService {
   private static instance: ApiService;
@@ -182,6 +184,24 @@ export class ApiService {
       console.error('Failed to fetch questionnaire:', error);
       throw {
         message: error.message || 'Failed to fetch questionnaire',
+        status: error.status || 500
+      };
+    }
+  }
+
+  // Script generation method
+  public async generateScript(params: {
+    scriptResponses: ScriptGeneratorState;
+    businessProfile: QuestionnaireState;
+    userName?: string;
+  }) {
+    try {
+      const response = await this.api.post('/script/generate', params);
+      return response.data.script;
+    } catch (error: any) {
+      console.error('Failed to generate script:', error);
+      throw {
+        message: error.message || 'Failed to generate script',
         status: error.status || 500
       };
     }

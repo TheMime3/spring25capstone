@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Save, CheckCircle, Sparkles, Clock, Trash } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, CheckCircle, Sparkles, Clock, Trash, AlertCircle } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { useScriptGeneratorStore } from '../store/scriptGeneratorStore';
 import { useScriptHistoryStore } from '../store/scriptHistoryStore';
 import { useQuestionnaireStore } from '../store/questionnaireStore';
 import { useAuthStore } from '../store/authStore';
 import { GeneratedScript } from '../types/scriptGenerator';
+import { api } from '../services/api';
 
 const ScriptGenerator = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const ScriptGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedHistoryScript, setSelectedHistoryScript] = useState<GeneratedScript | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   
   const {
     responses,
@@ -77,37 +79,26 @@ const ScriptGenerator = () => {
     }
   };
 
-  const generateScript = async () => {
+  const generateScriptWithAI = async () => {
     setIsGenerating(true);
+    setGenerationError(null);
     
     try {
-      // In a real implementation, this would call an API to generate the script
-      // For now, we'll simulate a delay and return a mock script
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Generate script using backend API
+      const scriptContent = await api.generateScript({
+        scriptResponses: responses,
+        businessProfile: businessProfileResponses,
+        userName: user?.firstName ? `${user.firstName} ${user.lastName}` : undefined
+      });
       
-      // Mock script generation based on the responses
-      const script = `
-Hello, I'm ${businessProfileResponses.contactInfo.contactDetails.split(',')[0] || '[Your Name]'} from ${businessProfileResponses.businessInfo.businessName || '[Your Business]'}.
-
-We solve a critical problem in the ${businessProfileResponses.businessInfo.industry || 'industry'}: ${responses.coreProblem || 'helping businesses communicate effectively'}.
-
-Our ideal customers are ${responses.idealCustomer || 'business owners who need help telling their story'}, and we help them by providing solutions that make a real difference.
-
-What makes us unique is ${responses.uniqueValue || 'our personalized approach and attention to detail'}.
-
-If you're looking for ${responses.keyMessage || 'a partner who understands your needs'}, we'd love to help.
-
-${responses.callToAction || 'Contact us today to learn more about how we can work together!'}
-      `;
-      
-      const scriptContent = script.trim();
       setGeneratedScript(scriptContent);
       
       // Save to history
       const title = `${businessProfileResponses.businessInfo.businessName || 'Business'} Script`;
       addScript(scriptContent, title);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to generate script:', error);
+      setGenerationError(error.message || 'Failed to generate script. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -452,7 +443,8 @@ ${responses.callToAction || 'Contact us today to learn more about how we can wor
                 {isGenerating ? (
                   <div className="flex flex-col items-center justify-center py-10">
                     <div className="w-12 h-12 border-t-2 border-b-2 border-primary rounded-full animate-spin mb-4"></div>
-                    <p className="text-black">Generating your script...</p>
+                    <p className="text-black">Generating your script with AI...</p>
+                    <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
                   </div>
                 ) : showHistory ? (
                   <div className="space-y-6">
@@ -500,15 +492,27 @@ ${responses.callToAction || 'Contact us today to learn more about how we can wor
                     <Sparkles className="h-12 w-12 text-primary mb-4" />
                     <h3 className="text-lg font-semibold text-black mb-2">Ready to Generate Your Script</h3>
                     <p className="text-black text-center mb-6">
-                      We've collected all the information we need. Click the button below to generate your 60-second script.
+                      We've collected all the information we need. Click the button below to generate your 60-second script using AI.
                     </p>
+                    
+                    {generationError && (
+                      <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 w-full max-w-md">
+                        <div className="flex">
+                          <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+                          <p className="text-sm text-red-700">
+                            {generationError}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="flex flex-col sm:flex-row gap-4">
                       <button
-                        onClick={generateScript}
+                        onClick={generateScriptWithAI}
                         className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                       >
                         <Sparkles className="mr-2 h-5 w-5" />
-                        Generate Script
+                        Generate Script with AI
                       </button>
                       
                       {scripts.length > 0 && (
@@ -611,6 +615,9 @@ ${responses.callToAction || 'Contact us today to learn more about how we can wor
                   {/* Progress indicator */}
                   <div className="mb-8">
                     <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-primary">
+                        Step {currentStep} of {totalSteps}
+                      </span>
                       <span className="text-sm font-medium text-primary">
                         Step {currentStep} of {totalSteps}
                       </span>

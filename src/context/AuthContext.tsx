@@ -56,22 +56,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: userProfile.email
         });
       } catch (error) {
-        // If token is expired, try to refresh
-        try {
-          await api.refreshToken();
-          const userProfile = await api.getProfile();
-          setUser({
-            id: userProfile.id,
-            firstName: userProfile.firstName || userProfile.first_name,
-            lastName: userProfile.lastName || userProfile.last_name,
-            email: userProfile.email
-          });
-        } catch (refreshError) {
-          // If refresh fails, clear tokens
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          setUser(null);
-        }
+        // If token is expired or invalid, clear tokens
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        setUser(null);
       }
     } catch (error) {
       console.error('Auth check error:', error);

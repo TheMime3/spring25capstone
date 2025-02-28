@@ -57,30 +57,8 @@ export class ApiService {
           code: error.response?.data?.code || 'UNKNOWN_ERROR'
         };
 
-        // If the error is 401 and we're not already refreshing, try to refresh the token
-        if (error.response?.status === 401 && !this.isRefreshing && originalRequest.url !== '/auth/refresh-token') {
-          this.isRefreshing = true;
-          
-          try {
-            const refreshResult = await this.refreshToken();
-            this.isRefreshing = false;
-            
-            // Update the original request with the new token
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${refreshResult.accessToken}`;
-            }
-            
-            // Retry the original request
-            return this.api(originalRequest);
-          } catch (refreshError) {
-            this.isRefreshing = false;
-            // If refresh fails, clear tokens and reject
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            return Promise.reject(apiError);
-          }
-        }
-
+        // We're no longer trying to refresh tokens automatically
+        // This forces users to log in again when their token expires
         return Promise.reject(apiError);
       }
     );
@@ -173,7 +151,7 @@ export class ApiService {
     }
   }
 
-  // New methods for questionnaire
+  // Questionnaire methods
   public async saveQuestionnaire(data: QuestionnaireResponse) {
     try {
       const response = await this.api.post('/user/questionnaire', data);

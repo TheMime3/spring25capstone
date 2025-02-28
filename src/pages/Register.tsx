@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { UserPlus, User, Mail, Lock } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
@@ -7,7 +7,7 @@ import { useApi } from '../hooks/useApi';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, register } = useAuthStore();
+  const { isAuthenticated, register, logout } = useAuthStore();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -27,10 +27,15 @@ const Register = () => {
     }
   );
 
-  if (isAuthenticated) {
-    navigate('/dashboard');
-    return null;
-  }
+  // Force logout when visiting register page to prevent token bypass
+  useEffect(() => {
+    // If there's a token in localStorage but we're on the register page,
+    // we should clear it to ensure the user has to register again
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      logout();
+    }
+  }, [logout]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,135 +50,156 @@ const Register = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="text-center">
-            <UserPlus className="mx-auto h-12 w-12 text-blue-500" />
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">Create your account</h2>
+      <div className="min-h-screen bg-gray-50 font-sans">
+        {/* Header bar */}
+        <div className="bg-primary p-4 flex items-center justify-between shadow-md">
+          <div className="flex items-center">
+            <img 
+              src="/src/logo.jpeg" 
+              alt="Company Logo" 
+              className="h-10 w-10 rounded-full"
+            />
           </div>
-
-          {error && (
-            <div className="bg-red-50 text-red-500 p-4 rounded-md text-center">
-              {error.message}
+          <div className="text-white text-sm font-medium tracking-wide">ACCOUNT SETUP</div>
+          <div className="w-10"></div> {/* Spacer for balance */}
+        </div>
+        
+        {/* Main content */}
+        <div className="max-w-md mx-auto py-12 px-6">
+          <div className="bg-white rounded-xl shadow-card p-8 mb-8">
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/src/logo.jpeg" 
+                alt="Company Logo" 
+                className="h-16 w-16 rounded-full"
+              />
             </div>
-          )}
+            <h1 className="text-4xl font-extrabold text-center mb-2 text-black">
+              <span className="text-primary">Create</span> Account
+            </h1>
+            <p className="text-center mb-8 text-black">
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary font-semibold hover:underline transition-all">
+                Sign In
+              </Link>
+            </p>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
+            {error && (
+              <div className="bg-red-50 text-red-500 p-4 rounded-md text-center mb-6">
+                {error.message}
+              </div>
+            )}
+
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="firstName" className="sr-only">First name</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      id="firstName"
-                      name="firstName"
-                      type="text"
-                      required
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="First name"
-                    />
-                  </div>
+                  <label htmlFor="firstName" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
+                    <User size={16} className="text-primary mr-2" />
+                    First Name
+                  </label>
+                  <input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                    placeholder="First name"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="lastName" className="sr-only">Last name</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      required
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="Last name"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="email" className="sr-only">Email address</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <label htmlFor="lastName" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
+                    <User size={16} className="text-primary mr-2" />
+                    Last Name
+                  </label>
                   <input
-                    id="email"
-                    name="email"
-                    type="email"
+                    id="lastName"
+                    name="lastName"
+                    type="text"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Email address"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                    placeholder="Last name"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="sr-only">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Password"
-                    minLength={6}
-                  />
-                </div>
+                <label htmlFor="email" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
+                  <Mail size={16} className="text-primary mr-2" />
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                  placeholder="Email address"
+                />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Confirm Password"
-                    minLength={6}
-                  />
-                </div>
+                <label htmlFor="password" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
+                  <Lock size={16} className="text-primary mr-2" />
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                  placeholder="Password"
+                  minLength={6}
+                />
               </div>
-            </div>
 
-            <div>
+              <div>
+                <label htmlFor="confirmPassword" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
+                  <Lock size={16} className="text-primary mr-2" />
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                  placeholder="Confirm Password"
+                  minLength={6}
+                />
+              </div>
+
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-200 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <div className="flex items-center">
+                  <div className="flex items-center justify-center">
                     <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
                     Creating account...
                   </div>
                 ) : (
-                  'Create account'
+                  'CREATE ACCOUNT'
                 )}
               </button>
-            </div>
-          </form>
-
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              Sign in
-            </Link>
-          </p>
+            </form>
+          </div>
+                    
         </div>
+        
+        {/* Decorative element */}
+        <div className="fixed right-0 bottom-1/4 w-4 h-4 bg-primary rounded-full opacity-60"></div>
       </div>
     </PageTransition>
   );

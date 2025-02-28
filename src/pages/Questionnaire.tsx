@@ -17,8 +17,8 @@ const Questionnaire = () => {
     isLoading,
     error,
     updateBasicInfo,
-    updatePresentationDetails,
-    updateGoals,
+    updateBusinessInfo,
+    updateContactInfo,
     saveQuestionnaire,
     loadQuestionnaire,
   } = useQuestionnaireStore();
@@ -67,19 +67,6 @@ const Questionnaire = () => {
     }
   };
 
-  const handleVisualAidChange = (aid: string, checked: boolean) => {
-    const currentAids = [...responses.presentationDetails.visualAids];
-    
-    if (checked && !currentAids.includes(aid)) {
-      updatePresentationDetails('visualAids', [...currentAids, aid]);
-    } else if (!checked && currentAids.includes(aid)) {
-      updatePresentationDetails(
-        'visualAids', 
-        currentAids.filter(item => item !== aid)
-      );
-    }
-  };
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -87,48 +74,58 @@ const Questionnaire = () => {
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-black flex items-center">
               <span className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary font-bold mr-2">1</span>
-              Basic Information
+              Business Information
             </h3>
-            <p className="text-black ml-10">
-              Please provide some basic information about your presentation needs.
+            <p className="text-black">
+              Please tell us about your business.
             </p>
             <div className="space-y-4">
               <div>
-                <label htmlFor="presentationType" className="block text-sm font-semibold uppercase mb-2 text-black ml-10">
-                  What type of presentation are you preparing for?
+                <label htmlFor="businessName" className="block text-sm font-semibold uppercase mb-2 text-black">
+                  What is the name of your business and website? *
                 </label>
-                <select
-                  id="presentationType"
-                  name="presentationType"
-                  value={responses.basicInfo.presentationType}
-                  onChange={(e) => updateBasicInfo('presentationType', e.target.value)}
+                <input
+                  id="businessName"
+                  name="businessName"
+                  type="text"
+                  required
+                  value={responses.businessInfo.businessName}
+                  onChange={(e) => updateBusinessInfo('businessName', e.target.value)}
                   className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
-                >
-                  <option>Business pitch</option>
-                  <option>Academic presentation</option>
-                  <option>Conference talk</option>
-                  <option>Sales presentation</option>
-                  <option>Training session</option>
-                  <option>Other</option>
-                </select>
+                  placeholder="Your business name"
+                />
               </div>
               
               <div>
-                <label htmlFor="audienceSize" className="block text-sm font-semibold uppercase mb-2 text-black ml-10">
-                  Approximately how large is your audience?
+                <label htmlFor="businessYears" className="block text-sm font-semibold uppercase mb-2 text-black">
+                  How many years have you been in business and how many employees do you have including yourself? *
                 </label>
-                <select
-                  id="audienceSize"
-                  name="audienceSize"
-                  value={responses.basicInfo.audienceSize}
-                  onChange={(e) => updateBasicInfo('audienceSize', e.target.value)}
+                <input
+                  id="businessYears"
+                  name="businessYears"
+                  type="text"
+                  required
+                  value={responses.businessInfo.businessYears}
+                  onChange={(e) => updateBusinessInfo('businessYears', e.target.value)}
                   className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
-                >
-                  <option>Small (1-10 people)</option>
-                  <option>Medium (11-50 people)</option>
-                  <option>Large (51-200 people)</option>
-                  <option>Very large (200+ people)</option>
-                </select>
+                  placeholder="e.g., 5 years, 12 employees"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="industry" className="block text-sm font-semibold uppercase mb-2 text-black">
+                  What industry are you in? *
+                </label>
+                <input
+                  id="industry"
+                  name="industry"
+                  type="text"
+                  required
+                  value={responses.businessInfo.industry}
+                  onChange={(e) => updateBusinessInfo('industry', e.target.value)}
+                  className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                  placeholder="Your industry"
+                />
               </div>
             </div>
           </div>
@@ -138,89 +135,58 @@ const Questionnaire = () => {
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-black flex items-center">
               <span className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary font-bold mr-2">2</span>
-              Presentation Details
+              Target Audience & Interests
             </h3>
-            <p className="text-black ml-10">
-              Tell us more about your presentation content and structure.
+            <p className="text-black">
+              Tell us about your audience and what you're looking to learn.
             </p>
             <div className="space-y-4">
               <div>
-                <label htmlFor="duration" className="block text-sm font-semibold uppercase mb-2 text-black ml-10">
-                  How long will your presentation be?
+                <label htmlFor="targetAudience" className="block text-sm font-semibold uppercase mb-2 text-black">
+                  Who is your target audience and in what industry? Please explain if you have multiple client segments. *
                 </label>
-                <select
-                  id="duration"
-                  name="duration"
-                  value={responses.presentationDetails.duration}
-                  onChange={(e) => updatePresentationDetails('duration', e.target.value)}
+                <textarea
+                  id="targetAudience"
+                  name="targetAudience"
+                  rows={3}
+                  required
+                  value={responses.businessInfo.targetAudience}
+                  onChange={(e) => updateBusinessInfo('targetAudience', e.target.value)}
                   className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
-                >
-                  <option>Less than 5 minutes</option>
-                  <option>5-15 minutes</option>
-                  <option>15-30 minutes</option>
-                  <option>30-60 minutes</option>
-                  <option>More than 60 minutes</option>
-                </select>
+                  placeholder="Describe your target audience"
+                ></textarea>
               </div>
               
               <div>
-                <label htmlFor="visualAids" className="block text-sm font-semibold uppercase mb-2 text-black ml-10">
-                  Will you be using visual aids?
+                <label htmlFor="learningInterests" className="block text-sm font-semibold uppercase mb-2 text-black">
+                  What are you interested in learning more from this call? *
                 </label>
-                <div className="mt-2 space-y-3 ml-10">
-                  <div className="flex items-center">
-                    <input
-                      id="visualAids-slides"
-                      name="visualAids"
-                      type="checkbox"
-                      checked={responses.presentationDetails.visualAids.includes('Slides/PowerPoint')}
-                      onChange={(e) => handleVisualAidChange('Slides/PowerPoint', e.target.checked)}
-                      className="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
-                    <label htmlFor="visualAids-slides" className="ml-3 block text-sm text-black">
-                      Slides/PowerPoint
-                    </label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      id="visualAids-handouts"
-                      name="visualAids"
-                      type="checkbox"
-                      checked={responses.presentationDetails.visualAids.includes('Handouts')}
-                      onChange={(e) => handleVisualAidChange('Handouts', e.target.checked)}
-                      className="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
-                    <label htmlFor="visualAids-handouts" className="ml-3 block text-sm text-black">
-                      Handouts
-                    </label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      id="visualAids-demos"
-                      name="visualAids"
-                      type="checkbox"
-                      checked={responses.presentationDetails.visualAids.includes('Live demonstrations')}
-                      onChange={(e) => handleVisualAidChange('Live demonstrations', e.target.checked)}
-                      className="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
-                    <label htmlFor="visualAids-demos" className="ml-3 block text-sm text-black">
-                      Live demonstrations
-                    </label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      id="visualAids-videos"
-                      name="visualAids"
-                      type="checkbox"
-                      checked={responses.presentationDetails.visualAids.includes('Videos')}
-                      onChange={(e) => handleVisualAidChange('Videos', e.target.checked)}
-                      className="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
-                    <label htmlFor="visualAids-videos" className="ml-3 block text-sm text-black">
-                      Videos
-                    </label>
-                  </div>
-                </div>
+                <textarea
+                  id="learningInterests"
+                  name="learningInterests"
+                  rows={3}
+                  required
+                  value={responses.businessInfo.learningInterests}
+                  onChange={(e) => updateBusinessInfo('learningInterests', e.target.value)}
+                  className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                  placeholder="What would you like to learn?"
+                ></textarea>
+              </div>
+              
+              <div>
+                <label htmlFor="foundUs" className="block text-sm font-semibold uppercase mb-2 text-black">
+                  How did you find us? *
+                </label>
+                <input
+                  id="foundUs"
+                  name="foundUs"
+                  type="text"
+                  required
+                  value={responses.businessInfo.foundUs}
+                  onChange={(e) => updateBusinessInfo('foundUs', e.target.value)}
+                  className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                  placeholder="e.g., Google, Referral, Social Media"
+                />
               </div>
             </div>
           </div>
@@ -230,45 +196,42 @@ const Questionnaire = () => {
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-black flex items-center">
               <span className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary font-bold mr-2">3</span>
-              Your Presentation Goals
+              Contact Information & Certifications
             </h3>
-            <p className="text-black ml-10">
-              Help us understand what you want to achieve with your presentation.
+            <p className="text-black">
+              Please provide your contact details and certification information.
             </p>
             <div className="space-y-4">
               <div>
-                <label htmlFor="primaryGoal" className="block text-sm font-semibold uppercase mb-2 text-black ml-10">
-                  What is your primary goal for this presentation?
+                <label htmlFor="contactInfo" className="block text-sm font-semibold uppercase mb-2 text-black">
+                  What is your name, email address, and contact phone number? *
                 </label>
-                <select
-                  id="primaryGoal"
-                  name="primaryGoal"
-                  value={responses.goals.primaryGoal}
-                  onChange={(e) => updateGoals('primaryGoal', e.target.value)}
+                <input
+                  id="contactInfo"
+                  name="contactInfo"
+                  type="text"
+                  required
+                  value={responses.contactInfo.contactDetails}
+                  onChange={(e) => updateContactInfo('contactDetails', e.target.value)}
                   className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
-                >
-                  <option>Inform or educate the audience</option>
-                  <option>Persuade the audience to take action</option>
-                  <option>Secure funding or resources</option>
-                  <option>Build relationships or network</option>
-                  <option>Showcase expertise or research</option>
-                  <option>Other</option>
-                </select>
+                  placeholder="Name, Email, Phone"
+                />
               </div>
               
               <div>
-                <label htmlFor="concerns" className="block text-sm font-semibold uppercase mb-2 text-black ml-10">
-                  What are your biggest concerns about presenting?
+                <label htmlFor="certifications" className="block text-sm font-semibold uppercase mb-2 text-black">
+                  Is your business certified with WBENC, NMSDC, LGBTQ, Disability, or Veteran-owned? *
                 </label>
-                <textarea
-                  id="concerns"
-                  name="concerns"
-                  rows={3}
-                  value={responses.goals.concerns}
-                  onChange={(e) => updateGoals('concerns', e.target.value)}
+                <input
+                  id="certifications"
+                  name="certifications"
+                  type="text"
+                  required
+                  value={responses.contactInfo.certifications}
+                  onChange={(e) => updateContactInfo('certifications', e.target.value)}
                   className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
-                  placeholder="e.g., public speaking anxiety, organizing content, engaging the audience..."
-                ></textarea>
+                  placeholder="List any certifications"
+                />
               </div>
             </div>
           </div>
@@ -284,9 +247,9 @@ const Questionnaire = () => {
         <div className="min-h-screen bg-gray-50 font-sans flex items-center justify-center px-4">
           <div className="max-w-md w-full bg-white rounded-xl shadow-card p-8 text-center">
             <CheckCircle className="mx-auto h-16 w-16 text-primary mb-4" />
-            <h2 className="text-2xl font-bold text-black mb-2">Questionnaire Complete!</h2>
+            <h2 className="text-2xl font-bold text-black mb-2">Thank You!</h2>
             <p className="text-black mb-6">
-              Thank you for completing the questionnaire. We'll use this information to help you prepare for your presentation.
+              We've received your information and will be in touch soon. Thank you for taking the time to tell us about your business.
             </p>
             <p className="text-sm text-black">
               Redirecting to dashboard...
@@ -309,7 +272,7 @@ const Questionnaire = () => {
               className="h-10 w-10 rounded-full"
             />
           </div>
-          <div className="text-white text-sm font-medium tracking-wide">QUESTIONNAIRE</div>
+          <div className="text-white text-sm font-medium tracking-wide">GET TO KNOW YOU</div>
           <div className="w-10"></div> {/* Spacer for balance */}
         </div>
         
@@ -326,9 +289,9 @@ const Questionnaire = () => {
           
           <div className="bg-white shadow-card overflow-hidden rounded-xl">
             <div className="px-6 py-5 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-black">Presentation Questionnaire</h2>
+              <h2 className="text-xl font-semibold text-black">Get To Know You</h2>
               <p className="mt-1 text-sm text-black">
-                Help us understand your presentation needs so we can provide tailored guidance.
+                Help us understand your business better so we can provide tailored solutions.
               </p>
             </div>
             

@@ -1,12 +1,14 @@
 import { useAuthStore } from '../store/authStore';
-import { LogOut, User, ClipboardList } from 'lucide-react';
+import { LogOut, User, ClipboardList, Sparkles, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import PageTransition from '../components/PageTransition';
+import { useScriptHistoryStore } from '../store/scriptHistoryStore';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const { scripts } = useScriptHistoryStore();
   
   const { execute: executeLogout, isLoading } = useApi(logout, {
     onSuccess: () => navigate('/login'),
@@ -19,6 +21,23 @@ const Dashboard = () => {
 
   const handleStartQuestionnaire = () => {
     navigate('/questionnaire');
+  };
+
+  const handleStartScriptGenerator = () => {
+    navigate('/script-generator');
+  };
+
+  const handleViewScriptHistory = () => {
+    navigate('/script-generator');
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   return (
@@ -71,7 +90,7 @@ const Dashboard = () => {
             </div>
             
             <div className="border-t border-gray-100 pt-8">
-              <h3 className="text-xl font-semibold text-black mb-6">Your Presentation Journey</h3>
+              <h3 className="text-xl font-semibold text-black mb-6">Your Business Profile</h3>
               
               <div className="bg-gray-50 rounded-lg p-6 mb-8">
                 <div className="flex items-start">
@@ -79,9 +98,9 @@ const Dashboard = () => {
                     <ClipboardList className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-black mb-2">Complete Your Questionnaire</h4>
+                    <h4 className="text-lg font-semibold text-black mb-2">Complete Your Business Profile</h4>
                     <p className="text-black mb-4">
-                      Help us understand your presentation needs by completing a short questionnaire. This will allow us to provide personalized guidance for your specific situation.
+                      Help us understand your business better by completing our "Get To Know You" questionnaire. This will allow us to provide personalized solutions for your specific needs.
                     </p>
                     <button
                       onClick={handleStartQuestionnaire}
@@ -94,21 +113,65 @@ const Dashboard = () => {
                 </div>
               </div>
               
+              <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                <div className="flex items-start">
+                  <div className="bg-primary/10 p-3 rounded-full mr-4">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-black mb-2">Generate Your 60-Second Script</h4>
+                    <p className="text-black mb-4">
+                      Create a compelling 60-second script for your business by answering a few questions. Our AI will generate a professional script based on your responses and business profile.
+                    </p>
+                    <button
+                      onClick={handleStartScriptGenerator}
+                      className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
+                    >
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Create Script
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {scripts.length > 0 && (
+                <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                  <div className="flex items-start">
+                    <div className="bg-primary/10 p-3 rounded-full mr-4">
+                      <Clock className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-black mb-2">Your Script History</h4>
+                      <p className="text-black mb-4">
+                        You have {scripts.length} saved script{scripts.length !== 1 ? 's' : ''}. Your most recent script was created on {scripts.length > 0 ? formatDate(scripts[0].createdAt) : ''}.
+                      </p>
+                      <button
+                        onClick={handleViewScriptHistory}
+                        className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
+                      >
+                        <Clock className="mr-2 h-5 w-5" />
+                        View Script History
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-lg font-semibold text-black mb-2">Upcoming Features</h4>
+                  <h4 className="text-lg font-semibold text-black mb-2">Our Services</h4>
                   <ul className="space-y-2 text-black">
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
-                      Presentation recording and analysis
+                      Business strategy consulting
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
-                      AI-powered feedback on delivery
+                      Marketing and brand development
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
-                      Practice sessions with virtual audience
+                      Digital transformation solutions
                     </li>
                   </ul>
                 </div>
@@ -118,15 +181,15 @@ const Dashboard = () => {
                   <ul className="space-y-2 text-black">
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
-                      <a href="#" className="text-primary hover:underline">Presentation templates</a>
+                      <a href="#" className="text-primary hover:underline">Business growth guide</a>
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
-                      <a href="#" className="text-primary hover:underline">Public speaking tips</a>
+                      <a href="#" className="text-primary hover:underline">Marketing strategy templates</a>
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
-                      <a href="#" className="text-primary hover:underline">Body language guide</a>
+                      <a href="#" className="text-primary hover:underline">Industry reports</a>
                     </li>
                   </ul>
                 </div>
@@ -135,7 +198,7 @@ const Dashboard = () => {
           </div>
           
           <p className="text-center text-xs text-black">
-            © 2025 Presentation Coach. All rights reserved.
+            © 2025 Business Solutions. All rights reserved.
           </p>
         </div>
         

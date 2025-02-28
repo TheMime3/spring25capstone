@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import Questionnaire from './pages/Questionnaire';
+import ScriptGenerator from './pages/ScriptGenerator';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -24,6 +25,11 @@ function App() {
             <Route path="/questionnaire" element={
               <PrivateRoute>
                 <Questionnaire />
+              </PrivateRoute>
+            } />
+            <Route path="/script-generator" element={
+              <PrivateRoute>
+                <ScriptGenerator />
               </PrivateRoute>
             } />
             <Route path="/home" element={<Home />} />

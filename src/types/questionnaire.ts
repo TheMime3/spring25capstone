@@ -6,13 +6,17 @@ export interface QuestionnaireResponse {
       presentationType: string;
       audienceSize: string;
     };
-    presentationDetails: {
-      duration: string;
-      visualAids: string[];
+    businessInfo: {
+      businessName: string;
+      businessYears: string;
+      industry: string;
+      targetAudience: string;
+      learningInterests: string;
+      foundUs: string;
     };
-    goals: {
-      primaryGoal: string;
-      concerns: string;
+    contactInfo: {
+      contactDetails: string;
+      certifications: string;
     };
   };
   createdAt?: string;
@@ -24,12 +28,16 @@ export interface QuestionnaireState {
     presentationType: string;
     audienceSize: string;
   };
-  presentationDetails: {
-    duration: string;
-    visualAids: string[];
+  businessInfo: {
+    businessName: string;
+    businessYears: string;
+    industry: string;
+    targetAudience: string;
+    learningInterests: string;
+    foundUs: string;
   };
-  goals: {
-    primaryGoal: string;
-    concerns: string;
+  contactInfo: {
+    contactDetails: string;
+    certifications: string;
   };
 }

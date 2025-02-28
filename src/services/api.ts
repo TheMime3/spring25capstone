@@ -154,9 +154,15 @@ export class ApiService {
   // Questionnaire methods
   public async saveQuestionnaire(data: QuestionnaireResponse) {
     try {
-      const response = await this.api.post('/user/questionnaire', data);
+      // Convert the data to match the API's expected format
+      const apiData = {
+        responses: data.responses
+      };
+      
+      const response = await this.api.post('/user/questionnaire', apiData);
       return response.data;
     } catch (error: any) {
+      console.error('Failed to save questionnaire:', error);
       throw {
         message: error.message || 'Failed to save questionnaire',
         status: error.status || 500
@@ -173,6 +179,7 @@ export class ApiService {
       if (error.status === 404) {
         return null;
       }
+      console.error('Failed to fetch questionnaire:', error);
       throw {
         message: error.message || 'Failed to fetch questionnaire',
         status: error.status || 500

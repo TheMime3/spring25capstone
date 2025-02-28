@@ -14,8 +14,8 @@ interface QuestionnaireStore {
   
   // Actions
   updateBasicInfo: (field: string, value: string) => void;
-  updatePresentationDetails: (field: string, value: string | string[]) => void;
-  updateGoals: (field: string, value: string) => void;
+  updateBusinessInfo: (field: string, value: string) => void;
+  updateContactInfo: (field: string, value: string) => void;
   saveQuestionnaire: () => Promise<boolean>;
   loadQuestionnaire: () => Promise<boolean>;
   resetQuestionnaire: () => void;
@@ -27,14 +27,18 @@ const initialState: QuestionnaireState = {
     presentationType: 'Business pitch',
     audienceSize: 'Small (1-10 people)',
   },
-  presentationDetails: {
-    duration: '5-15 minutes',
-    visualAids: [],
+  businessInfo: {
+    businessName: '',
+    businessYears: '',
+    industry: '',
+    targetAudience: '',
+    learningInterests: '',
+    foundUs: '',
   },
-  goals: {
-    primaryGoal: 'Inform or educate the audience',
-    concerns: '',
-  },
+  contactInfo: {
+    contactDetails: '',
+    certifications: '',
+  }
 };
 
 export const useQuestionnaireStore = create<QuestionnaireStore>()(
@@ -58,24 +62,24 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()(
         }));
       },
 
-      updatePresentationDetails: (field, value) => {
+      updateBusinessInfo: (field, value) => {
         set((state) => ({
           responses: {
             ...state.responses,
-            presentationDetails: {
-              ...state.responses.presentationDetails,
+            businessInfo: {
+              ...state.responses.businessInfo,
               [field]: value,
             },
           },
         }));
       },
 
-      updateGoals: (field, value) => {
+      updateContactInfo: (field, value) => {
         set((state) => ({
           responses: {
             ...state.responses,
-            goals: {
-              ...state.responses.goals,
+            contactInfo: {
+              ...state.responses.contactInfo,
               [field]: value,
             },
           },
@@ -124,6 +128,12 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()(
           set({ isLoading: false });
           return false;
         } catch (error: any) {
+          // If 404, it means no questionnaire exists yet, which is fine
+          if (error.status === 404) {
+            set({ isLoading: false });
+            return false;
+          }
+          
           set({ 
             isLoading: false, 
             error: error.message || 'Failed to load questionnaire' 
@@ -140,6 +150,16 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()(
       name: 'questionnaire-storage',
       // Only persist the responses
       partialize: (state) => ({ responses: state.responses }),
+      // Add version to handle schema changes
+      version: 1,
+      // Add migration to handle old data format
+      migrate: (persistedState: any, version) => {
+        if (version === 0) {
+          // If we have old data format, reset to initial state
+          return { responses: initialState };
+        }
+        return persistedState as { responses: QuestionnaireState };
+      },
     }
   )
 );

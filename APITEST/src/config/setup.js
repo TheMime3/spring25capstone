@@ -68,6 +68,20 @@ async function setupDatabase() {
     `);
     console.log('Audit logs table created or already exists');
 
+    // Create questionnaires table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS questionnaires (
+        id VARCHAR(36) PRIMARY KEY,
+        user_id VARCHAR(36) NOT NULL,
+        responses JSON NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_user_questionnaires (user_id)
+      )
+    `);
+    console.log('Questionnaires table created or already exists');
+
     console.log('Database setup completed successfully');
   } catch (error) {
     console.error('Error setting up database:', error);

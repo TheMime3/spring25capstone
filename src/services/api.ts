@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode';
-import { useAuthStore } from '../store/authStore';
+import { QuestionnaireResponse } from '../types/questionnaire';
+import { ScriptGeneratorState } from '../types/scriptGenerator';
+import { QuestionnaireState } from '../types/questionnaire';
 
 export class ApiService {
   private static instance: ApiService;
@@ -10,8 +10,14 @@ export class ApiService {
   private refreshSubscribers: ((token: string) => void)[] = [];
 
   private constructor() {
+    // Use the environment variable or fallback to the current window location
+    const apiUrl = import.meta.env.VITE_API_URL || 
+                  (window.location.hostname === 'localhost' 
+                    ? 'http://localhost:5000'
+                    : `http://${window.location.hostname}:5000`);
+    
     this.api = axios.create({
-      baseURL: 'http://localhost:5000',
+      baseURL: apiUrl,
       withCredentials: true,
       headers: {
         'Content-Type': 'application/json'
@@ -31,7 +37,7 @@ export class ApiService {
   private setupInterceptors() {
     this.api.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const token = Cookies.get('accessToken');
+        const token = localStorage.getItem('accessToken');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -53,6 +59,8 @@ export class ApiService {
           code: error.response?.data?.code || 'UNKNOWN_ERROR'
         };
 
+        // We're no longer trying to refresh tokens automatically
+        // This forces users to log in again when their token expires
         return Promise.reject(apiError);
       }
     );
@@ -61,6 +69,8 @@ export class ApiService {
   public async login(email: string, password: string) {
     try {
       const response = await this.api.post('/auth/login', { email, password });
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
       return response.data;
     } catch (error: any) {
       throw {
@@ -72,7 +82,6 @@ export class ApiService {
 
   public async register(firstName: string, lastName: string, email: string, password: string) {
     try {
-      // Format the request body to match the API's expected structure
       const response = await this.api.post('/auth/register', {
         firstName,
         lastName,
@@ -80,8 +89,8 @@ export class ApiService {
         password
       });
       
-      // Log the response for debugging
-      console.log('Registration response:', response.data);
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
       
       return response.data;
     } catch (error: any) {
@@ -95,8 +104,14 @@ export class ApiService {
 
   public async logout() {
     try {
-      await this.api.post('/auth/logout');
+      const refreshToken = localStorage.getItem('refreshToken');
+      await this.api.post('/auth/logout', { refreshToken });
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
     } catch (error: any) {
+      // Still remove tokens even if the API call fails
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       throw {
         message: error.message || 'Logout failed',
         status: error.status || 500
@@ -111,6 +126,82 @@ export class ApiService {
     } catch (error: any) {
       throw {
         message: error.message || 'Failed to fetch profile',
+        status: error.status || 500
+      };
+    }
+  }
+
+  public async refreshToken() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        throw { message: 'No refresh token available', status: 401 };
+      }
+      
+      const response = await this.api.post('/auth/refresh-token', { refreshToken });
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+      
+      return response.data;
+    } catch (error: any) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      throw {
+        message: error.message || 'Failed to refresh token',
+        status: error.status || 500
+      };
+    }
+  }
+
+  // Questionnaire methods
+  public async saveQuestionnaire(data: QuestionnaireResponse) {
+    try {
+      // Convert the data to match the API's expected format
+      const apiData = {
+        responses: data.responses
+      };
+      
+      const response = await this.api.post('/user/questionnaire', apiData);
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to save questionnaire:', error);
+      throw {
+        message: error.message || 'Failed to save questionnaire',
+        status: error.status || 500
+      };
+    }
+  }
+
+  public async getQuestionnaire() {
+    try {
+      const response = await this.api.get('/user/questionnaire');
+      return response.data;
+    } catch (error: any) {
+      // If 404, it means no questionnaire exists yet
+      if (error.status === 404) {
+        return null;
+      }
+      console.error('Failed to fetch questionnaire:', error);
+      throw {
+        message: error.message || 'Failed to fetch questionnaire',
+        status: error.status || 500
+      };
+    }
+  }
+
+  // Script generation method
+  public async generateScript(params: {
+    scriptResponses: ScriptGeneratorState;
+    businessProfile: QuestionnaireState;
+    userName?: string;
+  }) {
+    try {
+      const response = await this.api.post('/script/generate', params);
+      return response.data.script;
+    } catch (error: any) {
+      console.error('Failed to generate script:', error);
+      throw {
+        message: error.message || 'Failed to generate script',
         status: error.status || 500
       };
     }

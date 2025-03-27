@@ -3,6 +3,10 @@ import { AnimatePresence } from 'framer-motion';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
+import Questionnaire from './pages/Questionnaire';
+import ScriptGenerator from './pages/ScriptGenerator';
+import Recording from './pages/Recording';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -19,7 +23,23 @@ function App() {
                 <Dashboard />
               </PrivateRoute>
             } />
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/questionnaire" element={
+              <PrivateRoute>
+                <Questionnaire />
+              </PrivateRoute>
+            } />
+            <Route path="/script-generator" element={
+              <PrivateRoute>
+                <ScriptGenerator />
+              </PrivateRoute>
+            } />
+            <Route path="/recording" element={
+              <PrivateRoute>
+                <Recording />
+              </PrivateRoute>
+            } />
+            <Route path="/home" element={<Home />} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
           </Routes>
         </AnimatePresence>
       </Router>

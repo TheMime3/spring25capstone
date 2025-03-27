@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/authStore';
-import { LogOut, User, ClipboardList, Sparkles, Clock } from 'lucide-react';
+import { LogOut, User, ClipboardList, Sparkles, Clock, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import PageTransition from '../components/PageTransition';
@@ -28,8 +28,11 @@ const Dashboard = () => {
   };
 
   const handleViewScriptHistory = () => {
-    // Add view=history parameter to URL when navigating
     navigate('/script-generator?view=history');
+  };
+
+  const handleStartRecording = () => {
+    navigate('/recording');
   };
 
   const formatDate = (dateString: string) => {
@@ -135,26 +138,49 @@ const Dashboard = () => {
               </div>
               
               {scripts.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-6 mb-8">
-                  <div className="flex items-start">
-                    <div className="bg-primary/10 p-3 rounded-full mr-4">
-                      <Clock className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-semibold text-black mb-2">Your Script History</h4>
-                      <p className="text-black mb-4">
-                        You have {scripts.length} saved script{scripts.length !== 1 ? 's' : ''}. Your most recent script was created on {scripts.length > 0 ? formatDate(scripts[0].createdAt) : ''}.
-                      </p>
-                      <button
-                        onClick={handleViewScriptHistory}
-                        className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
-                      >
-                        <Clock className="mr-2 h-5 w-5" />
-                        View Script History
-                      </button>
+                <>
+                  <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                    <div className="flex items-start">
+                      <div className="bg-primary/10 p-3 rounded-full mr-4">
+                        <Clock className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-semibold text-black mb-2">Your Script History</h4>
+                        <p className="text-black mb-4">
+                          You have {scripts.length} saved script{scripts.length !== 1 ? 's' : ''}. Your most recent script was created on {scripts.length > 0 ? formatDate(scripts[0].createdAt) : ''}.
+                        </p>
+                        <button
+                          onClick={handleViewScriptHistory}
+                          className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
+                        >
+                          <Clock className="mr-2 h-5 w-5" />
+                          View Script History
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+
+                  <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                    <div className="flex items-start">
+                      <div className="bg-primary/10 p-3 rounded-full mr-4">
+                        <Video className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-semibold text-black mb-2">Record Your Script</h4>
+                        <p className="text-black mb-4">
+                          Ready to record? Use our teleprompter to record a professional video of your latest script. Features include auto-scrolling, word highlighting, and HD video recording.
+                        </p>
+                        <button
+                          onClick={handleStartRecording}
+                          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
+                        >
+                          <Video className="mr-2 h-5 w-5" />
+                          Start Recording
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

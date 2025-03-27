@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Save, CheckCircle, Sparkles, Clock, Trash, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, CheckCircle, Sparkles, Clock, Trash, AlertCircle, Video } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { useScriptGeneratorStore } from '../store/scriptGeneratorStore';
 import { useScriptHistoryStore } from '../store/scriptHistoryStore';
@@ -474,8 +474,16 @@ const ScriptGenerator = () => {
                     
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                       <button
+                        onClick={() => navigate('/recording')}
+                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                      >
+                        <Video className="mr-2 h-5 w-5" />
+                        Record Your Script
+                      </button>
+                      
+                      <button
                         onClick={() => navigate('/dashboard')}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                        className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                       >
                         Return to Dashboard
                       </button>
@@ -483,9 +491,9 @@ const ScriptGenerator = () => {
                       {scripts.length > 0 && (
                         <button
                           onClick={handleViewHistory}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                          className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                         >
-                          <Clock className="mr-2 h-4 w-4" />
+                          <Clock className="mr-2 h-5 w-5" />
                           View Script History
                         </button>
                       )}

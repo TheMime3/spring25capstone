@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import Questionnaire from './pages/Questionnaire';
 import ScriptGenerator from './pages/ScriptGenerator';
+import Recording from './pages/Recording';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -30,6 +31,11 @@ function App() {
             <Route path="/script-generator" element={
               <PrivateRoute>
                 <ScriptGenerator />
+              </PrivateRoute>
+            } />
+            <Route path="/recording" element={
+              <PrivateRoute>
+                <Recording />
               </PrivateRoute>
             } />
             <Route path="/home" element={<Home />} />

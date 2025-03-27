@@ -28,7 +28,8 @@ const Dashboard = () => {
   };
 
   const handleViewScriptHistory = () => {
-    navigate('/script-generator');
+    // Add view=history parameter to URL when navigating
+    navigate('/script-generator?view=history');
   };
 
   const formatDate = (dateString: string) => {
@@ -43,7 +44,6 @@ const Dashboard = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-gray-50 font-sans">
-        {/* Header bar */}
         <div className="bg-primary p-4 flex items-center justify-between shadow-md">
           <div className="flex items-center">
             <img 
@@ -53,7 +53,7 @@ const Dashboard = () => {
             />
           </div>
           <div className="text-white text-sm font-medium tracking-wide">DASHBOARD</div>
-          <div className="w-10"></div> {/* Spacer for balance */}
+          <div className="w-10"></div>
         </div>
 
         <div className="max-w-4xl mx-auto py-12 px-6">
@@ -202,7 +202,6 @@ const Dashboard = () => {
           </p>
         </div>
         
-        {/* Decorative element */}
         <div className="fixed right-0 bottom-1/4 w-4 h-4 bg-primary rounded-full opacity-60"></div>
       </div>
     </PageTransition>

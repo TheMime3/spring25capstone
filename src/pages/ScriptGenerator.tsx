@@ -20,6 +20,7 @@ const ScriptGenerator = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedHistoryScript, setSelectedHistoryScript] = useState<GeneratedScript | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [isViewingHistory, setIsViewingHistory] = useState(false);
   
   const {
     responses,
@@ -44,6 +45,15 @@ const ScriptGenerator = () => {
     loadResponses().catch(console.error);
     loadQuestionnaire().catch(console.error);
   }, [loadResponses, loadQuestionnaire]);
+
+  // Check URL parameters for direct history view
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('view') === 'history') {
+      setShowHistory(true);
+      setIsViewingHistory(true);
+    }
+  }, []);
 
   const totalSteps = 7;
 
@@ -70,7 +80,6 @@ const ScriptGenerator = () => {
       if (success) {
         setIsComplete(true);
       } else {
-        // Handle error
         setIsSubmitting(false);
       }
     } catch (error) {
@@ -84,7 +93,6 @@ const ScriptGenerator = () => {
     setGenerationError(null);
     
     try {
-      // Generate script using backend API
       const scriptContent = await api.generateScript({
         scriptResponses: responses,
         businessProfile: businessProfileResponses,
@@ -93,7 +101,6 @@ const ScriptGenerator = () => {
       
       setGeneratedScript(scriptContent);
       
-      // Save to history
       const title = `${businessProfileResponses.businessInfo.businessName || 'Business'} Script`;
       addScript(scriptContent, title);
     } catch (error: any) {
@@ -105,14 +112,20 @@ const ScriptGenerator = () => {
   };
 
   const handleViewHistory = () => {
+    // Update URL without reloading the page
+    window.history.pushState({}, '', '?view=history');
     setShowHistory(true);
+    setIsViewingHistory(true);
     setSelectedHistoryScript(null);
   };
 
   const handleSelectHistoryScript = (script: GeneratedScript) => {
     setSelectedHistoryScript(script);
     setGeneratedScript(script.content);
+    setIsComplete(true);
     setShowHistory(false);
+    // Remove the history parameter from URL
+    window.history.pushState({}, '', window.location.pathname);
   };
 
   const handleDeleteScript = (id: string, e: React.MouseEvent) => {
@@ -365,49 +378,10 @@ const ScriptGenerator = () => {
     }
   };
 
-  const renderScriptHistory = () => {
-    if (scripts.length === 0) {
-      return (
-        <div className="text-center py-8 text-gray-500">
-          <p>You haven't generated any scripts yet.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-        {scripts.map((script) => (
-          <div 
-            key={script.id}
-            onClick={() => handleSelectHistoryScript(script)}
-            className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-primary hover:shadow-md transition-all cursor-pointer"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-medium text-black">{script.title}</h4>
-                <p className="text-xs text-gray-500">{formatDate(script.createdAt)}</p>
-              </div>
-              <button 
-                onClick={(e) => handleDeleteScript(script.id, e)}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <Trash size={16} />
-              </button>
-            </div>
-            <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-              {script.content.substring(0, 100)}...
-            </p>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   if (isComplete) {
     return (
       <PageTransition>
         <div className="min-h-screen bg-gray-50 font-sans">
-          {/* Header bar */}
           <div className="bg-primary p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center">
               <img 
@@ -417,7 +391,7 @@ const ScriptGenerator = () => {
               />
             </div>
             <div className="text-white text-sm font-medium tracking-wide">YOUR SCRIPT</div>
-            <div className="w-10"></div> {/* Spacer for balance */}
+            <div className="w-10"></div>
           </div>
           
           <div className="max-w-3xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
@@ -457,7 +431,37 @@ const ScriptGenerator = () => {
                         Back to Current Script
                       </button>
                     </div>
-                    {renderScriptHistory()}
+                    {scripts.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>You haven't generated any scripts yet.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {scripts.map((script) => (
+                          <div 
+                            key={script.id}
+                            onClick={() => handleSelectHistoryScript(script)}
+                            className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-primary hover:shadow-md transition-all cursor-pointer"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium text-black">{script.title}</h4>
+                                <p className="text-xs text-gray-500">{formatDate(script.createdAt)}</p>
+                              </div>
+                              <button 
+                                onClick={(e) => handleDeleteScript(script.id, e)}
+                                className="text-gray-400 hover:text-red-500 transition-colors"
+                              >
+                                <Trash size={16} />
+                              </button>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                              {script.content.substring(0, 100)}...
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : generatedScript ? (
                   <div className="space-y-6">
@@ -535,10 +539,89 @@ const ScriptGenerator = () => {
     );
   }
 
+  if (showHistory || isViewingHistory) {
+    return (
+      <PageTransition>
+        <div className="min-h-screen bg-gray-50 font-sans">
+          <div className="bg-primary p-4 flex items-center justify-between shadow-md">
+            <div className="flex items-center">
+              <img 
+                src="/src/logo.jpeg" 
+                alt="Company Logo" 
+                className="h-10 w-10 rounded-full"
+              />
+            </div>
+            <div className="text-white text-sm font-medium tracking-wide">SCRIPT HISTORY</div>
+            <div className="w-10"></div>
+          </div>
+          
+          <div className="max-w-3xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+            <div className="mb-8">
+              <button
+                onClick={() => {
+                  window.history.pushState({}, '', window.location.pathname);
+                  setShowHistory(false);
+                  setIsViewingHistory(false);
+                  navigate('/dashboard');
+                }}
+                className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-dark"
+              >
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                Back to Dashboard
+              </button>
+            </div>
+            
+            <div className="bg-white shadow-card overflow-hidden rounded-xl">
+              <div className="px-6 py-5 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-black">Your Script History</h2>
+                <p className="mt-1 text-sm text-black">
+                  View and manage your previously generated scripts.
+                </p>
+              </div>
+              
+              <div className="px-6 py-5">
+                {scripts.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>You haven't generated any scripts yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {scripts.map((script) => (
+                      <div 
+                        key={script.id}
+                        onClick={() => handleSelectHistoryScript(script)}
+                        className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-primary hover:shadow-md transition-all cursor-pointer"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium text-black">{script.title}</h4>
+                            <p className="text-xs text-gray-500">{formatDate(script.createdAt)}</p>
+                          </div>
+                          <button 
+                            onClick={(e) => handleDeleteScript(script.id, e)}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                          {script.content.substring(0, 100)}...
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-gray-50 font-sans">
-        {/* Header bar */}
         <div className="bg-primary p-4 flex items-center justify-between shadow-md">
           <div className="flex items-center">
             <img 
@@ -548,7 +631,7 @@ const ScriptGenerator = () => {
             />
           </div>
           <div className="text-white text-sm font-medium tracking-wide">SCRIPT GENERATOR</div>
-          <div className="w-10"></div> {/* Spacer for balance */}
+          <div className="w-10"></div>
         </div>
         
         <div className="max-w-3xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
@@ -597,97 +680,71 @@ const ScriptGenerator = () => {
             )}
             
             <div className="px-6 py-5">
-              {showHistory ? (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-black">Your Script History</h3>
-                    <button
-                      onClick={() => setShowHistory(false)}
-                      className="text-sm text-primary hover:text-primary-dark"
-                    >
-                      Back to Generator
-                    </button>
-                  </div>
-                  {renderScriptHistory()}
+              <div className="mb-8">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-primary">
+                    Step {currentStep} of {totalSteps}
+                  </span>
+                  <span className="text-sm font-medium text-black">
+                    {Math.round((currentStep / totalSteps) * 100)}% Complete
+                  </span>
                 </div>
-              ) : (
-                <>
-                  {/* Progress indicator */}
-                  <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-primary">
-                        Step {currentStep} of {totalSteps}
-                      </span>
-                      <span className="text-sm font-medium text-primary">
-                        Step {currentStep} of {totalSteps}
-                      </span>
-                      <span className="text-sm font-medium text-black">
-                        {Math.round((currentStep / totalSteps) * 100)}% Complete
-                      </span>
-                    </div>
-                    <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-primary h-2.5 rounded-full transition-all duration-300 ease-in-out" 
-                        style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-                      ></div>
-                    </div>
+                <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5">
+                  <div  
+                    className="bg-primary h-2.5 rounded-full transition-all duration-300 ease-in-out" 
+                    style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              <div className="mb-8">
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="w-8 h-8 border-t-2 border-b-2 border-primary rounded-full animate-spin"></div>
                   </div>
-                  
-                  {/* Step content */}
-                  <div className="mb-8">
-                    {isLoading ? (
-                      <div className="flex justify-center py-8">
-                        <div className="w-8 h-8 border-t-2 border-b-2 border-primary rounded-full animate-spin"></div>
-                      </div>
-                    ) : (
-                      renderStepContent()
-                    )}
-                  </div>
-                  
-                  {/* Navigation buttons */}
-                  <div className="flex justify-between mt-8">
-                    <button
-                      type="button"
-                      onClick={handlePrevious}
-                      disabled={currentStep === 1 || isLoading}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Previous
-                    </button>
-                    
-                    <button
-                      type="button"
-                      onClick={handleNext}
-                      disabled={isSubmitting || isLoading}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {currentStep < totalSteps ? (
-                        <>
-                          Next
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </>
-                      ) : isSubmitting ? (
-                        <>
-                          <div className="w-4 h-4 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
-                          Submitting...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          Submit
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </>
-              )}
+                ) : (
+                  renderStepContent()
+                )}
+              </div>
+              
+              <div className="flex justify-between mt-8">
+                <button
+                  type="button"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1 || isLoading}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Previous
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={isSubmitting || isLoading}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {currentStep < totalSteps ? (
+                    <>
+                      Next
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  ) : isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Submit
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-        
-        {/* Decorative element */}
-        <div className="fixed right-0 bottom-1/4 w-4 h-4 bg-primary rounded-full opacity-60"></div>
       </div>
     </PageTransition>
   );

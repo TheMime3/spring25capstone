@@ -1,151 +1,128 @@
-# Full-Stack Authentication System
+# Presentation Coach - AI-Powered Business Presentation Platform
 
-A production-ready authentication system with a React frontend and Express.js backend, featuring comprehensive security measures and user management.
+A comprehensive platform that helps business owners create, practice, and perfect their business presentations using AI-generated scripts and advanced recording capabilities.
 
-## Features
+## Core Features
 
-### Frontend (React + TypeScript)
-- 🎨 Modern, responsive UI with Tailwind CSS
-- 🔒 Secure authentication flow
-- 🔄 Automatic token refresh
-- 📱 Mobile-friendly design
-- ⚡ Fast page transitions with Framer Motion
-- 🛣️ Protected routes
-- 🎯 Type safety with TypeScript
-- 🔍 Form validation
-- ⚠️ Error handling
-- 🔄 Loading states
-- 📤 Logout functionality
+### 1. Business Profile Management
+- Detailed business questionnaire
+- Industry-specific profiling
+- Target audience analysis
+- Business goals and objectives tracking
+- Company background storage
 
-### Backend (Express.js + MySQL)
-- 🔐 JWT-based authentication
-- 🔄 Refresh token rotation
-- 🔒 Password hashing with bcrypt
-- 📝 User registration and login
-- 🛡️ CORS protection
-- 📊 Security audit logging
-- 🔍 Input validation
-- ⚠️ Error handling middleware
-- 🗄️ MySQL database with optimized schema
-- 🆔 UUID for secure IDs
+### 2. AI Script Generation
+- 60-second script generation using OpenAI GPT-4
+- Context-aware content creation
+- Industry-specific terminology
+- Customizable tone and style
+- Script version history
 
-## Tech Stack
+### 3. Professional Recording Studio
+- Built-in teleprompter
+- HD video recording
+- Auto-scrolling script
+- Word highlighting
+- Recording pause/resume
+- Multiple take management
+
+### 4. User Authentication
+- Secure email/password authentication
+- JWT token management
+- Session handling
+- Password encryption
+- User profile management
+
+## Technical Stack
 
 ### Frontend
-- React 18
-- TypeScript
-- Tailwind CSS
-- Framer Motion
-- React Router
-- Zustand (State Management)
-- Axios
-- Lucide React (Icons)
+- React 18.3.1
+- TypeScript 5.5.3
+- Vite 6.1.1
+- Tailwind CSS 3.4.1
+- Framer Motion (animations)
+- Zustand (state management)
+- Axios (API client)
+- React Router 6.22.2
 
 ### Backend
-- Express.js
-- MySQL
-- JSON Web Tokens (JWT)
-- bcrypt
-- CORS
-- UUID
+- Node.js
+- Express.js 4.18.3
+- MySQL 8+
+- JWT Authentication
+- OpenAI API Integration
+- WebRTC (video recording)
+
+### Security Features
+- JWT-based authentication
+- Password hashing with bcrypt
+- Refresh token rotation
+- Secure session management
+- CORS protection
+- Input validation
+- Error handling middleware
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 18+
 - MySQL 8+
+- OpenAI API key
 - npm or yarn
 
-### Backend Setup
+### Installation
 
-1. Navigate to the API directory:
+1. Clone the repository:
+   ```bash
+   git clone [repository-url]
+   ```
+
+2. Install frontend dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up the backend:
    ```bash
    cd APITEST
+   npm install
    ```
 
-2. Create and configure environment variables:
-   ```bash
-   cp .env.example .env
+4. Configure environment variables:
+
+   Frontend (.env):
+   ```
+   PORT=5173
+   VITE_API_URL=http://localhost:5000
    ```
 
-3. Update `.env` with your MySQL credentials and other settings:
-   ```env
+   Backend (APITEST/.env):
+   ```
    PORT=5000
    DB_HOST=localhost
    DB_PORT=3306
    DB_NAME=auth_api_db
    DB_USER=your_username
    DB_PASSWORD=your_password
-   JWT_SECRET=your-super-secret-key-change-this
-   JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this
+   JWT_SECRET=your-super-secret-key
+   JWT_REFRESH_SECRET=your-refresh-secret-key
    FRONTEND_URL=*
    ACCESS_TOKEN_EXPIRES_IN=15m
    REFRESH_TOKEN_EXPIRES_IN=7d
+   OPENAI_API_KEY=your-openai-api-key
    ```
 
-4. Install dependencies:
+5. Initialize the database:
    ```bash
-   npm install
-   ```
-
-5. Set up the database:
-   ```bash
+   cd APITEST
    npm run setup
    ```
 
-6. Start the API server:
+6. Start the development servers:
    ```bash
-   npm run dev
-   ```
-
-### Frontend Setup
-
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-## Local Network Demo
-
-This application is configured to be easily shared on your local network for demonstration purposes.
-
-### Running the Demo
-
-1. Make sure your MySQL database is set up and running.
-
-2. Start both the frontend and backend servers with a single command:
-   ```bash
+   # In the root directory
    npm run start-demo
    ```
-
-3. The script will display URLs that can be used to access the application:
-   - Local access: http://localhost:5173
-   - Network access: http://YOUR_IP_ADDRESS:5173
-
-4. Share the network access URL with people on your local network.
-
-5. They can access the login page, create accounts, and use the application from their devices.
-
-### How It Works
-
-- The frontend automatically detects the correct API URL based on how it's being accessed
-- The backend accepts requests from any origin on your local network
-- Both servers bind to all network interfaces, making them accessible from other devices
-- The start script displays all available IP addresses that can be used to access the application
-
-### Security Note
-
-The local network demo configuration is intended for demonstration purposes only. For production deployment:
-
-- Restrict CORS to specific origins
-- Use proper SSL/TLS certificates
-- Set strong JWT secrets
-- Configure proper database security
 
 ## Database Schema
 
@@ -194,127 +171,127 @@ CREATE TABLE audit_logs (
 );
 ```
 
+### Questionnaires Table
+```sql
+CREATE TABLE questionnaires (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    responses JSON NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_questionnaires (user_id)
+);
+```
+
 ## API Endpoints
 
 ### Authentication
-
-#### Register User
-```http
-POST /auth/register
-Content-Type: application/json
-
-{
-    "firstName": "John",
-    "lastName": "Doe",
-    "email": "john@example.com",
-    "password": "securepassword123"
-}
-```
-
-#### Login
-```http
-POST /auth/login
-Content-Type: application/json
-
-{
-    "email": "john@example.com",
-    "password": "securepassword123"
-}
-```
-
-#### Refresh Token
-```http
-POST /auth/refresh-token
-Content-Type: application/json
-
-{
-    "refreshToken": "your-refresh-token"
-}
-```
-
-#### Logout
-```http
-POST /auth/logout
-Authorization: Bearer your-access-token
-Content-Type: application/json
-
-{
-    "refreshToken": "your-refresh-token"
-}
-```
+- POST `/auth/register` - Register new user
+- POST `/auth/login` - User login
+- POST `/auth/refresh-token` - Refresh access token
+- POST `/auth/logout` - User logout
 
 ### User Management
+- GET `/user/profile` - Get user profile
+- PUT `/user/profile` - Update user profile
 
-#### Get User Profile
-```http
-GET /user/profile
-Authorization: Bearer your-access-token
-```
+### Questionnaire
+- POST `/user/questionnaire` - Save questionnaire responses
+- GET `/user/questionnaire` - Get user's questionnaire
 
-## Security Features
+### Script Generation
+- POST `/script/generate` - Generate AI script
 
-### JWT Token Management
-- Access tokens expire in 15 minutes
-- Refresh tokens expire in 7 days
-- Refresh token rotation on every use
-- Secure token storage in httpOnly cookies
+## Features in Detail
 
-### Password Security
-- Passwords hashed using bcrypt
-- Minimum password length enforcement
-- Password strength validation
+### Business Profile Questionnaire
+- Business information collection
+- Industry analysis
+- Target audience definition
+- Business goals assessment
+- Contact information management
+- Certification tracking
 
-### Audit Logging
-- Login attempts
-- Registration events
-- Token refreshes
-- Logout events
-- IP address tracking
-- User agent logging
+### Script Generator
+- AI-powered content generation
+- Context-aware scripting
+- Industry-specific terminology
+- Customizable messaging
+- Version history
+- Script library management
 
-### API Security
-- CORS protection
-- Rate limiting
+### Recording Studio
+- Professional teleprompter
+- HD video recording
+- Auto-scrolling text
+- Word highlighting
+- Pause/Resume functionality
+- Take management
+- Video preview
+- Download capabilities
+
+### User Dashboard
+- Profile management
+- Script history
+- Recording library
+- Business profile overview
+- Quick actions
+- Progress tracking
+
+## Security Measures
+
+### Authentication
+- JWT token-based authentication
+- Refresh token rotation
+- Secure password hashing
+- Session management
+- Access control
+
+### Data Protection
 - Input validation
-- Error handling
 - SQL injection prevention
 - XSS protection
+- CORS configuration
+- Rate limiting
+- Error handling
 
-## Frontend Features
+### Audit Logging
+- User activity tracking
+- Security event logging
+- IP address monitoring
+- User agent tracking
+- Timestamp recording
 
-### Authentication Flow
-- Protected routes using React Router
-- Automatic token refresh
-- Session persistence
-- Secure token storage
+## Development
 
-### User Interface
-- Responsive design
-- Loading states
-- Error messages
-- Form validation
-- Smooth transitions
-- Mobile-friendly
-
-### State Management
-- Centralized auth state with Zustand
-- Type-safe state updates
-- Persistent auth state
-
-## Testing
-
-Run the automated test suite:
+### Running Tests
 ```bash
+cd APITEST
 npm run test
 ```
 
-The tests cover:
-- API health check
-- User registration
-- Login validation
-- Token refresh
-- Logout functionality
-- Error cases
+### Local Network Demo
+Run the demo script to start both frontend and backend servers:
+```bash
+npm run start-demo
+```
+
+This will:
+- Start the API server on port 5000
+- Start the frontend on port 5173
+- Display local and network access URLs
+- Enable sharing on local network
+
+### Building for Production
+```bash
+# Build frontend
+npm run build
+
+# Prepare backend
+cd APITEST
+npm run build
+```
 
 ## Error Handling
 
@@ -330,51 +307,11 @@ The API returns consistent error responses:
 Common error codes:
 - `VALIDATION_ERROR`: Invalid input data
 - `UNAUTHORIZED`: Authentication required
-- `INVALID_CREDENTIALS`: Wrong email or password
-- `TOKEN_EXPIRED`: JWT token has expired
-- `INVALID_TOKEN`: Invalid or malformed token
-
-## Production Deployment
-
-### Backend
-1. Update environment variables for production
-2. Set secure JWT secrets
-3. Configure proper CORS settings
-4. Enable rate limiting
-5. Set up SSL/TLS
-6. Configure database connection pool
-
-### Frontend
-1. Build the production bundle:
-   ```bash
-   npm run build
-   ```
-2. Configure production API URL
-3. Enable production error logging
-4. Optimize bundle size
-5. Configure CDN (if used)
-
-## Troubleshooting
-
-### Common Issues
-
-#### API Connection Problems
-- Ensure the backend server is running
-- Check that the API URL is correctly configured
-- Verify that CORS is properly set up
-- Check network connectivity between devices
-
-#### Database Connection Issues
-- Verify MySQL is running
-- Check database credentials in `.env`
-- Ensure the database and tables exist
-- Run `npm run setup` to initialize the database
-
-#### Authentication Failures
-- Check that JWT secrets are properly set
-- Verify token expiration times
-- Ensure refresh tokens are being stored correctly
-- Check for clock synchronization issues
+- `INVALID_CREDENTIALS`: Wrong email/password
+- `TOKEN_EXPIRED`: JWT token expired
+- `INVALID_TOKEN`: Invalid token
+- `NOT_FOUND`: Resource not found
+- `INTERNAL_ERROR`: Server error
 
 ## Contributing
 
@@ -386,4 +323,18 @@ Common error codes:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support, please:
+1. Check the documentation
+2. Search existing issues
+3. Create a new issue if needed
+
+## Acknowledgments
+
+- OpenAI for GPT-4 API
+- React team for React 18
+- Tailwind CSS team
+- All contributors and users

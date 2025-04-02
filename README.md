@@ -335,6 +335,8 @@ For support, please:
 ## Acknowledgments
 
 - OpenAI for GPT-4 API
+- Bolt.new for Development
+- Boltsync for Bolt.new workaround
 - React team for React 18
 - Tailwind CSS team
 - All contributors and users

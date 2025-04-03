@@ -42,10 +42,34 @@ const Register = () => {
     clearError();
     try {
       await executeRegister();
-    } catch (error) {
-      // Error is already handled by useApi hook
-      console.error('Registration failed:', error);
+    } catch (error: any) {
+      // No need to log the error since it's handled by useApi hook
+      if (error?.message === 'User already registered') {
+        // Clear the form
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+      }
     }
+  };
+
+  const getErrorMessage = (error: any) => {
+    if (error?.message === 'User already registered') {
+      return (
+        <div className="bg-blue-50 text-blue-700 p-4 rounded-md text-center mb-6">
+          This email is already registered. Please{' '}
+          <Link to="/login" className="font-bold underline hover:text-blue-800">
+            sign in
+          </Link>{' '}
+          instead.
+        </div>
+      );
+    }
+    return (
+      <div className="bg-red-50 text-red-500 p-4 rounded-md text-center mb-6">
+        {error.message}
+      </div>
+    );
   };
 
   return (
@@ -84,11 +108,7 @@ const Register = () => {
               </Link>
             </p>
 
-            {error && (
-              <div className="bg-red-50 text-red-500 p-4 rounded-md text-center mb-6">
-                {error.message}
-              </div>
-            )}
+            {error && getErrorMessage(error)}
 
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-4">

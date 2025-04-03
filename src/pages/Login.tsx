@@ -19,29 +19,42 @@ const Login = () => {
     }
   );
 
-  // Force logout when visiting login page to prevent token bypass
   useEffect(() => {
-    // If there's a token in localStorage but we're on the login page,
-    // we should clear it to ensure the user has to log in again
     const accessToken = localStorage.getItem('accessToken');
     if (accessToken) {
       logout();
     }
   }, [logout]);
 
-  // Only redirect if user logs in through the form
-  // We don't auto-redirect based on isAuthenticated anymore
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    await executeLogin();
+    try {
+      await executeLogin();
+    } catch (error: any) {
+      console.error('Login failed:', error);
+    }
+  };
+
+  const getErrorMessage = (error: any) => {
+    if (error?.message === 'Invalid login credentials') {
+      return 'Invalid email or password. Please try again.';
+    }
+    if (error?.message === 'Failed to retrieve user profile') {
+      return 'Unable to retrieve your profile. Please ensure your account is properly set up or contact support.';
+    }
+    if (error?.message === 'User profile not found') {
+      return 'Your user profile could not be found. Please ensure your account is properly set up or contact support.';
+    }
+    if (error?.message === 'Failed to create user profile') {
+      return 'Unable to set up your profile. Please try registering again or contact support.';
+    }
+    return error?.message || 'An error occurred during login. Please try again.';
   };
 
   return (
     <PageTransition>
       <div className="min-h-screen bg-gray-50 font-sans">
-        {/* Header bar */}
         <div className="bg-primary p-4 flex items-center justify-between shadow-md">
           <div className="flex items-center">
             <img 
@@ -51,10 +64,9 @@ const Login = () => {
             />
           </div>
           <div className="text-white text-sm font-medium tracking-wide">SIGN IN</div>
-          <div className="w-10"></div> {/* Spacer for balance */}
+          <div className="w-10"></div>
         </div>
         
-        {/* Main content */}
         <div className="max-w-md mx-auto py-12 px-6">
           <div className="bg-white rounded-xl shadow-card p-8 mb-8">
             <div className="flex justify-center mb-6">
@@ -76,12 +88,11 @@ const Login = () => {
 
             {error && (
               <div className="bg-red-50 text-red-500 p-4 rounded-md text-center mb-6">
-                {error}
+                {getErrorMessage(error)}
               </div>
             )}
 
             <form className="space-y-6" onSubmit={handleSubmit}>
-              {/* Email field */}
               <div>
                 <label htmlFor="email" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
                   <Mail size={16} className="text-primary mr-2" />
@@ -99,7 +110,6 @@ const Login = () => {
                 />
               </div>
 
-              {/* Password field */}
               <div>
                 <label htmlFor="password" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
                   <Lock size={16} className="text-primary mr-2" />
@@ -133,11 +143,8 @@ const Login = () => {
               </button>
             </form>
           </div>
-          
-          
         </div>
         
-        {/* Decorative element */}
         <div className="fixed right-0 bottom-1/4 w-4 h-4 bg-primary rounded-full opacity-60"></div>
       </div>
     </PageTransition>

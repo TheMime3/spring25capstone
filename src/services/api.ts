@@ -1,4 +1,7 @@
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
+import { supabase } from './supabase';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 import { QuestionnaireResponse } from '../types/questionnaire';
 import { ScriptGeneratorState } from '../types/scriptGenerator';
 import { QuestionnaireState } from '../types/questionnaire';
@@ -6,25 +9,13 @@ import { QuestionnaireState } from '../types/questionnaire';
 export class ApiService {
   private static instance: ApiService;
   private api: AxiosInstance;
-  private isRefreshing = false;
-  private refreshSubscribers: ((token: string) => void)[] = [];
 
   private constructor() {
-    // Use the environment variable or fallback to the current window location
-    const apiUrl = import.meta.env.VITE_API_URL || 
-                  (window.location.hostname === 'localhost' 
-                    ? 'http://localhost:5000'
-                    : `http://${window.location.hostname}:5000`);
-    
     this.api = axios.create({
-      baseURL: apiUrl,
-      withCredentials: true,
       headers: {
         'Content-Type': 'application/json'
-      },
+      }
     });
-
-    this.setupInterceptors();
   }
 
   public static getInstance(): ApiService {
@@ -34,67 +25,100 @@ export class ApiService {
     return ApiService.instance;
   }
 
-  private setupInterceptors() {
-    this.api.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    this.api.interceptors.response.use(
-      (response) => response,
-      async (error: AxiosError) => {
-        const originalRequest = error.config;
-        if (!originalRequest) return Promise.reject(error);
-
-        // Handle API errors
-        const apiError = {
-          message: error.response?.data?.message || 'An error occurred',
-          status: error.response?.status || 500,
-          code: error.response?.data?.code || 'UNKNOWN_ERROR'
-        };
-
-        // We're no longer trying to refresh tokens automatically
-        // This forces users to log in again when their token expires
-        return Promise.reject(apiError);
-      }
-    );
-  }
-
   public async login(email: string, password: string) {
     try {
-      const response = await this.api.post('/auth/login', { email, password });
-      localStorage.setItem('accessToken', response.data.accessToken);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
-      return response.data;
+      // Find user by email
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email.toLowerCase())
+        .single();
+
+      if (userError || !user) {
+        throw new Error('Invalid credentials');
+      }
+
+      // Verify password
+      const isValid = await bcrypt.compare(password, user.password_hash);
+      if (!isValid) {
+        throw new Error('Invalid credentials');
+      }
+
+      // Update last login
+      await supabase
+        .from('users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', user.id);
+
+      // Log audit event
+      await this.logAuditEvent(user.id, 'login', {
+        ip_address: '127.0.0.1',
+        user_agent: navigator.userAgent
+      });
+
+      // Return user data
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name
+        }
+      };
     } catch (error: any) {
       throw {
         message: error.message || 'Login failed',
-        status: error.status || 500
+        status: 401
       };
     }
   }
 
   public async register(firstName: string, lastName: string, email: string, password: string) {
     try {
-      const response = await this.api.post('/auth/register', {
-        firstName,
-        lastName,
-        email,
-        password
+      // Hash password
+      const passwordHash = await bcrypt.hash(password, 12);
+      const userId = uuidv4();
+
+      // Try to create user - this will fail if email already exists due to unique constraint
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .insert([{
+          id: userId,
+          email: email.toLowerCase(),
+          first_name: firstName,
+          last_name: lastName,
+          password_hash: passwordHash
+        }])
+        .select('id, email, first_name, last_name')
+        .single();
+
+      if (userError) {
+        // Check if error is due to duplicate email
+        if (userError.code === '23505') {
+          throw new Error('User already registered');
+        }
+        throw new Error('Failed to create user');
+      }
+
+      if (!user) {
+        throw new Error('Failed to create user');
+      }
+
+      // Log audit event
+      await this.logAuditEvent(userId, 'register', {
+        ip_address: '127.0.0.1',
+        user_agent: navigator.userAgent
       });
-      
-      localStorage.setItem('accessToken', response.data.accessToken);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
-      
-      return response.data;
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name
+        }
+      };
     } catch (error: any) {
-      console.error('Registration error:', error);
       throw {
         message: error.message || 'Registration failed',
         status: error.status || 500
@@ -102,27 +126,24 @@ export class ApiService {
     }
   }
 
-  public async logout() {
+  public async getProfile(userId: string) {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      await this.api.post('/auth/logout', { refreshToken });
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-    } catch (error: any) {
-      // Still remove tokens even if the API call fails
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      throw {
-        message: error.message || 'Logout failed',
-        status: error.status || 500
-      };
-    }
-  }
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-  public async getProfile() {
-    try {
-      const response = await this.api.get('/user/profile');
-      return response.data;
+      if (error || !user) {
+        throw new Error('User not found');
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name
+      };
     } catch (error: any) {
       throw {
         message: error.message || 'Failed to fetch profile',
@@ -131,40 +152,18 @@ export class ApiService {
     }
   }
 
-  public async refreshToken() {
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        throw { message: 'No refresh token available', status: 401 };
-      }
-      
-      const response = await this.api.post('/auth/refresh-token', { refreshToken });
-      localStorage.setItem('accessToken', response.data.accessToken);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
-      
-      return response.data;
-    } catch (error: any) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      throw {
-        message: error.message || 'Failed to refresh token',
-        status: error.status || 500
-      };
-    }
-  }
-
-  // Questionnaire methods
   public async saveQuestionnaire(data: QuestionnaireResponse) {
     try {
-      // Convert the data to match the API's expected format
-      const apiData = {
-        responses: data.responses
-      };
-      
-      const response = await this.api.post('/user/questionnaire', apiData);
-      return response.data;
+      const { error } = await supabase
+        .from('questionnaires')
+        .upsert({
+          user_id: data.userId,
+          responses: data.responses
+        });
+
+      if (error) throw error;
+      return true;
     } catch (error: any) {
-      console.error('Failed to save questionnaire:', error);
       throw {
         message: error.message || 'Failed to save questionnaire',
         status: error.status || 500
@@ -172,16 +171,21 @@ export class ApiService {
     }
   }
 
-  public async getQuestionnaire() {
+  public async getQuestionnaire(userId: string) {
     try {
-      const response = await this.api.get('/user/questionnaire');
-      return response.data;
-    } catch (error: any) {
-      // If 404, it means no questionnaire exists yet
-      if (error.status === 404) {
-        return null;
+      const { data, error } = await supabase
+        .from('questionnaires')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') return null;
+        throw error;
       }
-      console.error('Failed to fetch questionnaire:', error);
+
+      return data;
+    } catch (error: any) {
       throw {
         message: error.message || 'Failed to fetch questionnaire',
         status: error.status || 500
@@ -189,7 +193,6 @@ export class ApiService {
     }
   }
 
-  // Script generation method
   public async generateScript(params: {
     scriptResponses: ScriptGeneratorState;
     businessProfile: QuestionnaireState;
@@ -199,11 +202,26 @@ export class ApiService {
       const response = await this.api.post('/script/generate', params);
       return response.data.script;
     } catch (error: any) {
-      console.error('Failed to generate script:', error);
       throw {
         message: error.message || 'Failed to generate script',
         status: error.status || 500
       };
+    }
+  }
+
+  public async logAuditEvent(userId: string, eventType: string, details: { ip_address?: string; user_agent?: string }) {
+    try {
+      const { error } = await supabase
+        .from('audit_logs')
+        .insert([{
+          user_id: userId,
+          event_type: eventType,
+          ...details
+        }]);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Failed to log audit event:', error);
     }
   }
 }

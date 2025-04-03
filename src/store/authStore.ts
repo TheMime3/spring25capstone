@@ -32,6 +32,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.login(email, password);
+      
+      if (!response.user) {
+        throw new Error('Login failed');
+      }
+
       set({
         user: response.user,
         isAuthenticated: true,
@@ -40,7 +45,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (error: any) {
       set({
         error: error.message,
-        isAuthenticated: false
+        isAuthenticated: false,
+        user: null
       });
       throw error;
     } finally {
@@ -52,21 +58,23 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.register(firstName, lastName, email, password);
+      
+      if (!response.user) {
+        throw new Error('Registration failed');
+      }
+
       set({
         user: response.user,
         isAuthenticated: true,
         error: null
       });
     } catch (error: any) {
-      const apiError: ApiError = {
-        message: error.message || 'Registration failed',
-        status: error.status || 500
-      };
       set({
-        error: apiError.message,
-        isAuthenticated: false
+        error: error.message,
+        isAuthenticated: false,
+        user: null
       });
-      throw apiError;
+      throw error;
     } finally {
       set({ isLoading: false });
     }
@@ -75,7 +83,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
-      await api.logout();
+      // Just clear the local state since we're not using Supabase auth
+      localStorage.removeItem('user');
     } finally {
       set({
         user: null,

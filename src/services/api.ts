@@ -14,8 +14,23 @@ export class ApiService {
     this.api = axios.create({
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 30000, // Increased timeout for AI operations
     });
+
+    // Add response interceptor for better error handling
+    this.api.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('Request timed out. Please try again.');
+        }
+        if (!error.response) {
+          throw new Error('Network error. Please check your connection and try again.');
+        }
+        throw error;
+      }
+    );
   }
 
   public static getInstance(): ApiService {
@@ -50,11 +65,18 @@ export class ApiService {
         .update({ last_login: new Date().toISOString() })
         .eq('id', user.id);
 
-      // Log audit event
-      await this.logAuditEvent(user.id, 'login', {
-        ip_address: '127.0.0.1',
-        user_agent: navigator.userAgent
+      // Log audit event using stored procedure
+      const { error: auditError } = await supabase.rpc('log_audit_event', {
+        p_user_id: user.id,
+        p_event_type: 'login',
+        p_ip_address: '127.0.0.1',
+        p_user_agent: navigator.userAgent
       });
+
+      if (auditError) {
+        console.error('Failed to log audit event:', auditError);
+        // Don't throw error here, just log it
+      }
 
       // Return user data
       return {
@@ -79,7 +101,7 @@ export class ApiService {
       const passwordHash = await bcrypt.hash(password, 12);
       const userId = uuidv4();
 
-      // Try to create user - this will fail if email already exists due to unique constraint
+      // Try to create user - this will fail if email already exists
       const { data: user, error: userError } = await supabase
         .from('users')
         .insert([{
@@ -104,11 +126,18 @@ export class ApiService {
         throw new Error('Failed to create user');
       }
 
-      // Log audit event
-      await this.logAuditEvent(userId, 'register', {
-        ip_address: '127.0.0.1',
-        user_agent: navigator.userAgent
+      // Log audit event using stored procedure
+      const { error: auditError } = await supabase.rpc('log_audit_event', {
+        p_user_id: userId,
+        p_event_type: 'register',
+        p_ip_address: '127.0.0.1',
+        p_user_agent: navigator.userAgent
       });
+
+      if (auditError) {
+        console.error('Failed to log audit event:', auditError);
+        // Don't throw error here, just log it
+      }
 
       return {
         user: {
@@ -154,12 +183,15 @@ export class ApiService {
 
   public async saveQuestionnaire(data: QuestionnaireResponse) {
     try {
-      const { error } = await supabase
-        .from('questionnaires')
-        .upsert({
-          user_id: data.userId,
-          responses: data.responses
-        });
+      if (!data.userId) {
+        throw new Error('User ID is required');
+      }
+
+      // Call stored procedure to handle questionnaire insert/update
+      const { error } = await supabase.rpc('handle_questionnaire', {
+        p_user_id: data.userId,
+        p_responses: data.responses
+      });
 
       if (error) throw error;
       return true;
@@ -172,19 +204,19 @@ export class ApiService {
   }
 
   public async getQuestionnaire(userId: string) {
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
     try {
       const { data, error } = await supabase
         .from('questionnaires')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle no results
 
-      if (error) {
-        if (error.code === 'PGRST116') return null;
-        throw error;
-      }
-
-      return data;
+      if (error) throw error;
+      return data; // Will be null if no questionnaire exists
     } catch (error: any) {
       throw {
         message: error.message || 'Failed to fetch questionnaire',
@@ -199,31 +231,36 @@ export class ApiService {
     userName?: string;
   }) {
     try {
-      const response = await this.api.post('/script/generate', params);
-      return response.data.script;
+      // Validate input parameters
+      if (!params.scriptResponses || !params.businessProfile) {
+        throw new Error('Missing required script generation parameters');
+      }
+
+      // Validate business name specifically
+      if (!params.businessProfile.businessInfo?.businessName) {
+        throw new Error('Business name is required. Please complete your business profile first.');
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-script', {
+        body: params,
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to generate script');
+      }
+
+      if (!data?.script) {
+        throw new Error('No script was generated. Please try again.');
+      }
+
+      return data.script;
     } catch (error: any) {
-      throw {
-        message: error.message || 'Failed to generate script',
-        status: error.status || 500
-      };
-    }
-  }
-
-  public async logAuditEvent(userId: string, eventType: string, details: { ip_address?: string; user_agent?: string }) {
-    try {
-      const { error } = await supabase
-        .from('audit_logs')
-        .insert([{
-          user_id: userId,
-          event_type: eventType,
-          ...details
-        }]);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Failed to log audit event:', error);
+      console.error('Script generation error:', error);
+      throw new Error(error.message || 'Failed to generate script. Please try again later.');
     }
   }
 }
 
+// Export a singleton instance of the ApiService
 export const api = ApiService.getInstance();

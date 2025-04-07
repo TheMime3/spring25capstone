@@ -18,16 +18,28 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// Configure CORS to accept requests from any origin on the local network
+// Configure CORS with specific options
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if(!origin) return callback(null, true);
+    const allowedOrigins = [
+      'http://localhost:5173',  // Vite dev server
+      'http://localhost:4173',  // Vite preview
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:4173'
+    ];
     
-    // Allow requests from any origin in development
-    return callback(null, true);
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Request logging middleware

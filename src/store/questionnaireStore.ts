@@ -115,7 +115,13 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()(
       loadQuestionnaire: async () => {
         set({ isLoading: true, error: null });
         try {
-          const data = await api.getQuestionnaire();
+          const user = useAuthStore.getState().user;
+          
+          if (!user) {
+            throw new Error('User not authenticated');
+          }
+
+          const data = await api.getQuestionnaire(user.id);
           
           if (data && data.responses) {
             set({ 

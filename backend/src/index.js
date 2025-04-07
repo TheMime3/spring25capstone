@@ -3,9 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
-import passport from './config/passport.js';
 
 dotenv.config();
 
@@ -18,10 +16,8 @@ app.use(cors({
   origin: process.env.FRONTEND_URL,
   credentials: true
 }));
-app.use(passport.initialize());
 
 // Routes
-app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 
 // Connect to MongoDB

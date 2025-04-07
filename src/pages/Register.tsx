@@ -27,10 +27,7 @@ const Register = () => {
     }
   );
 
-  // Force logout when visiting register page to prevent token bypass
   useEffect(() => {
-    // If there's a token in localStorage but we're on the register page,
-    // we should clear it to ensure the user has to register again
     const accessToken = localStorage.getItem('accessToken');
     if (accessToken) {
       logout();
@@ -43,9 +40,7 @@ const Register = () => {
     try {
       await executeRegister();
     } catch (error: any) {
-      // No need to log the error since it's handled by useApi hook
-      if (error?.message === 'User already registered') {
-        // Clear the form
+      if (error?.code === 'USER_EXISTS') {
         setEmail('');
         setPassword('');
         setConfirmPassword('');
@@ -75,7 +70,6 @@ const Register = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-gray-50 font-sans">
-        {/* Header bar */}
         <div className="bg-primary p-4 flex items-center justify-between shadow-md">
           <div className="flex items-center">
             <img 
@@ -85,10 +79,9 @@ const Register = () => {
             />
           </div>
           <div className="text-white text-sm font-medium tracking-wide">ACCOUNT SETUP</div>
-          <div className="w-10"></div> {/* Spacer for balance */}
+          <div className="w-10"></div>
         </div>
         
-        {/* Main content */}
         <div className="max-w-md mx-auto py-12 px-6">
           <div className="bg-white rounded-xl shadow-card p-8 mb-8">
             <div className="flex justify-center mb-6">
@@ -215,10 +208,8 @@ const Register = () => {
               </button>
             </form>
           </div>
-                    
         </div>
         
-        {/* Decorative element */}
         <div className="fixed right-0 bottom-1/4 w-4 h-4 bg-primary rounded-full opacity-60"></div>
       </div>
     </PageTransition>

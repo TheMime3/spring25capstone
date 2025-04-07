@@ -1,36 +1,14 @@
-import axios, { AxiosInstance } from 'axios';
 import { supabase } from './supabase';
-import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
 import { QuestionnaireResponse } from '../types/questionnaire';
 import { ScriptGeneratorState } from '../types/scriptGenerator';
 import { QuestionnaireState } from '../types/questionnaire';
 
 export class ApiService {
   private static instance: ApiService;
-  private api: AxiosInstance;
+  private baseUrl: string;
 
   private constructor() {
-    this.api = axios.create({
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000, // Increased timeout for AI operations
-    });
-
-    // Add response interceptor for better error handling
-    this.api.interceptors.response.use(
-      response => response,
-      error => {
-        if (error.code === 'ECONNABORTED') {
-          throw new Error('Request timed out. Please try again.');
-        }
-        if (!error.response) {
-          throw new Error('Network error. Please check your connection and try again.');
-        }
-        throw error;
-      }
-    );
+    this.baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
   }
 
   public static getInstance(): ApiService {
@@ -40,189 +18,148 @@ export class ApiService {
     return ApiService.instance;
   }
 
-  public async login(email: string, password: string) {
-    try {
-      // Find user by email
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .single();
+  private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    
+    if (authError || !session) {
+      throw new Error('Authentication required');
+    }
 
-      if (userError || !user) {
-        throw new Error('Invalid credentials');
-      }
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      ...options.headers,
+    };
 
-      // Verify password
-      const isValid = await bcrypt.compare(password, user.password_hash);
-      if (!isValid) {
-        throw new Error('Invalid credentials');
-      }
+    const response = await fetch(`${this.baseUrl}/${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-      // Update last login
-      await supabase
-        .from('users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', user.id);
-
-      // Log audit event using stored procedure
-      const { error: auditError } = await supabase.rpc('log_audit_event', {
-        p_user_id: user.id,
-        p_event_type: 'login',
-        p_ip_address: '127.0.0.1',
-        p_user_agent: navigator.userAgent
-      });
-
-      if (auditError) {
-        console.error('Failed to log audit event:', auditError);
-        // Don't throw error here, just log it
-      }
-
-      // Return user data
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.first_name,
-          lastName: user.last_name
-        }
-      };
-    } catch (error: any) {
+    if (!response.ok) {
+      const error = await response.json();
       throw {
-        message: error.message || 'Login failed',
-        status: 401
+        message: error.error || 'An error occurred',
+        status: response.status,
       };
     }
+
+    return response.json();
+  }
+
+  public async login(email: string, password: string) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      if (error.message === 'Invalid login credentials') {
+        throw {
+          message: 'Invalid email or password',
+          status: 401,
+        };
+      }
+      throw error;
+    }
+
+    if (!data.user) {
+      throw new Error('Login failed');
+    }
+
+    return {
+      user: {
+        id: data.user.id,
+        email: data.user.email!,
+        firstName: data.user.user_metadata.first_name || '',
+        lastName: data.user.user_metadata.last_name || '',
+      }
+    };
   }
 
   public async register(firstName: string, lastName: string, email: string, password: string) {
-    try {
-      // Hash password
-      const passwordHash = await bcrypt.hash(password, 12);
-      const userId = uuidv4();
-
-      // Try to create user - this will fail if email already exists
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .insert([{
-          id: userId,
-          email: email.toLowerCase(),
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
           first_name: firstName,
           last_name: lastName,
-          password_hash: passwordHash
-        }])
-        .select('id, email, first_name, last_name')
-        .single();
+        },
+      },
+    });
 
-      if (userError) {
-        // Check if error is due to duplicate email
-        if (userError.code === '23505') {
-          throw new Error('User already registered');
-        }
-        throw new Error('Failed to create user');
+    if (error) {
+      // Check for specific Supabase error codes
+      if (error.status === 400 && error.message.includes('already registered')) {
+        throw {
+          message: 'User already registered',
+          status: 409,
+          code: 'USER_EXISTS',
+        };
       }
-
-      if (!user) {
-        throw new Error('Failed to create user');
-      }
-
-      // Log audit event using stored procedure
-      const { error: auditError } = await supabase.rpc('log_audit_event', {
-        p_user_id: userId,
-        p_event_type: 'register',
-        p_ip_address: '127.0.0.1',
-        p_user_agent: navigator.userAgent
-      });
-
-      if (auditError) {
-        console.error('Failed to log audit event:', auditError);
-        // Don't throw error here, just log it
-      }
-
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.first_name,
-          lastName: user.last_name
-        }
-      };
-    } catch (error: any) {
-      throw {
-        message: error.message || 'Registration failed',
-        status: error.status || 500
-      };
+      throw error;
     }
+
+    if (!data.user) {
+      throw new Error('Registration failed');
+    }
+
+    return {
+      user: {
+        id: data.user.id,
+        email: data.user.email!,
+        firstName: data.user.user_metadata.first_name,
+        lastName: data.user.user_metadata.last_name,
+      }
+    };
   }
 
-  public async getProfile(userId: string) {
-    try {
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error || !user) {
-        throw new Error('User not found');
-      }
-
-      return {
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name
-      };
-    } catch (error: any) {
-      throw {
-        message: error.message || 'Failed to fetch profile',
-        status: error.status || 500
-      };
+  public async getProfile() {
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    
+    if (authError || !session?.user) {
+      throw new Error('Authentication required');
     }
+
+    return {
+      id: session.user.id,
+      email: session.user.email!,
+      firstName: session.user.user_metadata.first_name,
+      lastName: session.user.user_metadata.last_name,
+    };
+  }
+
+  public async updateProfile(data: { firstName?: string; lastName?: string; email?: string }) {
+    const { data: updateData, error } = await supabase.auth.updateUser({
+      email: data.email,
+      data: {
+        first_name: data.firstName,
+        last_name: data.lastName,
+      }
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      id: updateData.user.id,
+      email: updateData.user.email!,
+      firstName: updateData.user.user_metadata.first_name,
+      lastName: updateData.user.user_metadata.last_name,
+    };
   }
 
   public async saveQuestionnaire(data: QuestionnaireResponse) {
-    try {
-      if (!data.userId) {
-        throw new Error('User ID is required');
-      }
-
-      // Call stored procedure to handle questionnaire insert/update
-      const { error } = await supabase.rpc('handle_questionnaire', {
-        p_user_id: data.userId,
-        p_responses: data.responses
-      });
-
-      if (error) throw error;
-      return true;
-    } catch (error: any) {
-      throw {
-        message: error.message || 'Failed to save questionnaire',
-        status: error.status || 500
-      };
-    }
+    return this.fetchWithAuth('questionnaire', {
+      method: 'POST',
+      body: JSON.stringify({ responses: data.responses }),
+    });
   }
 
-  public async getQuestionnaire(userId: string) {
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('questionnaires')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle(); // Use maybeSingle instead of single to handle no results
-
-      if (error) throw error;
-      return data; // Will be null if no questionnaire exists
-    } catch (error: any) {
-      throw {
-        message: error.message || 'Failed to fetch questionnaire',
-        status: error.status || 500
-      };
-    }
+  public async getQuestionnaire() {
+    return this.fetchWithAuth('questionnaire');
   }
 
   public async generateScript(params: {
@@ -230,37 +167,12 @@ export class ApiService {
     businessProfile: QuestionnaireState;
     userName?: string;
   }) {
-    try {
-      // Validate input parameters
-      if (!params.scriptResponses || !params.businessProfile) {
-        throw new Error('Missing required script generation parameters');
-      }
-
-      // Validate business name specifically
-      if (!params.businessProfile.businessInfo?.businessName) {
-        throw new Error('Business name is required. Please complete your business profile first.');
-      }
-
-      const { data, error } = await supabase.functions.invoke('generate-script', {
-        body: params,
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Failed to generate script');
-      }
-
-      if (!data?.script) {
-        throw new Error('No script was generated. Please try again.');
-      }
-
-      return data.script;
-    } catch (error: any) {
-      console.error('Script generation error:', error);
-      throw new Error(error.message || 'Failed to generate script. Please try again later.');
-    }
+    const response = await this.fetchWithAuth('script', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+    return response.script;
   }
 }
 
-// Export a singleton instance of the ApiService
 export const api = ApiService.getInstance();

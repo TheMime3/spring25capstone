@@ -1,0 +1,8 @@
+{
+  "name": "script-function",
+  "version": "1.0.0",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "openai": "^4.28.0"
+  }
+}

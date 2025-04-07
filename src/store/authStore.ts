@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User, ApiError } from '../types/auth';
 import { api } from '../services/api';
+import { supabase } from '../services/supabase';
 
 interface AuthState {
   user: User | null;
@@ -83,8 +84,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
-      // Just clear the local state since we're not using Supabase auth
-      localStorage.removeItem('user');
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
     } finally {
       set({
         user: null,

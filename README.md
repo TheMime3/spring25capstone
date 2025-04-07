@@ -1,24 +1,36 @@
 # Presentation Coach - AI-Powered Business Presentation Platform
 
+[![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-6.1.1-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-2.39.7-3ECF8E?logo=supabase&logoColor=white)](https://supabase.io/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-412991?logo=openai&logoColor=white)](https://openai.com/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-3.4.1-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 A comprehensive platform that helps business owners create, practice, and perfect their business presentations using AI-generated scripts and advanced recording capabilities.
 
-## Core Features
+<div align="center">
+  <img src="src/logo.jpeg" alt="Presentation Coach Logo" width="150" height="150" style="border-radius: 20px;">
+</div>
 
-### 1. Business Profile Management
+## ✨ Core Features
+
+### 🏢 Business Profile Management
 - Detailed business questionnaire
 - Industry-specific profiling
 - Target audience analysis
 - Business goals and objectives tracking
 - Company background storage
 
-### 2. AI Script Generation
+### 🤖 AI Script Generation
 - 60-second script generation using OpenAI GPT-4
 - Context-aware content creation
 - Industry-specific terminology
 - Customizable tone and style
 - Script version history
 
-### 3. Professional Recording Studio
+### 🎥 Professional Recording Studio
 - Built-in teleprompter
 - HD video recording
 - Auto-scrolling script
@@ -26,49 +38,36 @@ A comprehensive platform that helps business owners create, practice, and perfec
 - Recording pause/resume
 - Multiple take management
 
-### 4. User Authentication
-- Secure email/password authentication
-- JWT token management
-- Session handling
-- Password encryption
+### 🔐 User Authentication
+- Secure authentication via Supabase Auth
+- Email/password authentication
 - User profile management
+- Session handling
+- Audit logging
 
-## Technical Stack
+## 🛠️ Technical Stack
 
 ### Frontend
-- React 18.3.1
-- TypeScript 5.5.3
-- Vite 6.1.1
-- Tailwind CSS 3.4.1
-- Framer Motion (animations)
-- Zustand (state management)
-- Axios (API client)
-- React Router 6.22.2
+![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-6.1.1-646CFF?logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind-3.4.1-38B2AC?logo=tailwind-css&logoColor=white)
+![Framer](https://img.shields.io/badge/Framer_Motion-Latest-black?logo=framer&logoColor=white)
+![Zustand](https://img.shields.io/badge/Zustand-4.5.2-brown?logo=react&logoColor=white)
 
-### Backend
-- Node.js
-- Express.js 4.18.3
-- MySQL 8+
-- JWT Authentication
-- OpenAI API Integration
-- WebRTC (video recording)
+### Backend & Database
+![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?logo=supabase&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Latest-336791?logo=postgresql&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-412991?logo=openai&logoColor=white)
+![WebRTC](https://img.shields.io/badge/WebRTC-Latest-333333?logo=webrtc&logoColor=white)
 
-### Security Features
-- JWT-based authentication
-- Password hashing with bcrypt
-- Refresh token rotation
-- Secure session management
-- CORS protection
-- Input validation
-- Error handling middleware
-
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- MySQL 8+
-- OpenAI API key
-- npm or yarn
+- Node.js 18+ ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)
+- Supabase account ![Supabase](https://img.shields.io/badge/Supabase-Account-3ECF8E?logo=supabase&logoColor=white)
+- OpenAI API key ![OpenAI](https://img.shields.io/badge/OpenAI-API_Key-412991?logo=openai&logoColor=white)
+- npm or yarn ![npm](https://img.shields.io/badge/npm-Latest-CB3837?logo=npm&logoColor=white)
 
 ### Installation
 
@@ -77,225 +76,86 @@ A comprehensive platform that helps business owners create, practice, and perfec
    git clone [repository-url]
    ```
 
-2. Install frontend dependencies:
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Set up the backend:
+3. Configure environment variables:
+   ```env
+   VITE_SUPABASE_URL=your-supabase-url
+   VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+   VITE_OPENAI_API_KEY=your-openai-api-key
+   ```
+
+4. Start the development server:
    ```bash
-   cd APITEST
-   npm install
+   npm run dev
    ```
 
-4. Configure environment variables:
+## 📊 Database Schema
 
-   Frontend (.env):
-   ```
-   PORT=5173
-   VITE_API_URL=http://localhost:5000
-   ```
+<details>
+<summary>Click to expand database schema</summary>
 
-   Backend (APITEST/.env):
-   ```
-   PORT=5000
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_NAME=auth_api_db
-   DB_USER=your_username
-   DB_PASSWORD=your_password
-   JWT_SECRET=your-super-secret-key
-   JWT_REFRESH_SECRET=your-refresh-secret-key
-   FRONTEND_URL=*
-   ACCESS_TOKEN_EXPIRES_IN=15m
-   REFRESH_TOKEN_EXPIRES_IN=7d
-   OPENAI_API_KEY=your-openai-api-key
-   ```
-
-5. Initialize the database:
-   ```bash
-   cd APITEST
-   npm run setup
-   ```
-
-6. Start the development servers:
-   ```bash
-   # In the root directory
-   npm run start-demo
-   ```
-
-## Database Schema
-
-### Users Table
+### Questionnaires Table
 ```sql
-CREATE TABLE users (
-    id VARCHAR(36) PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    last_login TIMESTAMP NULL,
-    INDEX idx_email (email)
-);
-```
-
-### Refresh Tokens Table
-```sql
-CREATE TABLE refresh_tokens (
-    id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
-    token VARCHAR(255) NOT NULL UNIQUE,
-    expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_token (token),
-    INDEX idx_user_tokens (user_id)
+CREATE TABLE questionnaires (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    responses JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
 ### Audit Logs Table
 ```sql
 CREATE TABLE audit_logs (
-    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id VARCHAR(36),
-    event_type ENUM('login', 'logout', 'register', 'password_change', 'token_refresh') NOT NULL,
-    ip_address VARCHAR(45),
-    user_agent VARCHAR(255),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_user_audit (user_id),
-    INDEX idx_event_type (event_type),
-    INDEX idx_created_at (created_at)
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    event_type TEXT NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
+</details>
 
-### Questionnaires Table
-```sql
-CREATE TABLE questionnaires (
-    id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
-    responses JSON NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_questionnaires (user_id)
-);
-```
+## 🔌 API Endpoints
 
-## API Endpoints
+<details>
+<summary>Click to expand API endpoints</summary>
 
-### Authentication
-- POST `/auth/register` - Register new user
-- POST `/auth/login` - User login
-- POST `/auth/refresh-token` - Refresh access token
-- POST `/auth/logout` - User logout
+### Authentication (Supabase Auth)
+- POST `/auth/v1/signup` - Register new user
+- POST `/auth/v1/token?grant_type=password` - User login
+- POST `/auth/v1/logout` - User logout
 
-### User Management
-- GET `/user/profile` - Get user profile
-- PUT `/user/profile` - Update user profile
+### Edge Functions
+- POST `/functions/v1/questionnaire` - Save questionnaire responses
+- GET `/functions/v1/questionnaire` - Get user's questionnaire
+- POST `/functions/v1/script` - Generate AI script
+</details>
 
-### Questionnaire
-- POST `/user/questionnaire` - Save questionnaire responses
-- GET `/user/questionnaire` - Get user's questionnaire
+## 🛡️ Security Measures
 
-### Script Generation
-- POST `/script/generate` - Generate AI script
-
-## Features in Detail
-
-### Business Profile Questionnaire
-- Business information collection
-- Industry analysis
-- Target audience definition
-- Business goals assessment
-- Contact information management
-- Certification tracking
-
-### Script Generator
-- AI-powered content generation
-- Context-aware scripting
-- Industry-specific terminology
-- Customizable messaging
-- Version history
-- Script library management
-
-### Recording Studio
-- Professional teleprompter
-- HD video recording
-- Auto-scrolling text
-- Word highlighting
-- Pause/Resume functionality
-- Take management
-- Video preview
-- Download capabilities
-
-### User Dashboard
-- Profile management
-- Script history
-- Recording library
-- Business profile overview
-- Quick actions
-- Progress tracking
-
-## Security Measures
-
-### Authentication
-- JWT token-based authentication
-- Refresh token rotation
-- Secure password hashing
+### Authentication & Authorization
+![Supabase Auth](https://img.shields.io/badge/Supabase-Auth-3ECF8E?logo=supabase&logoColor=white)
+- Row Level Security (RLS)
 - Session management
 - Access control
 
 ### Data Protection
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-RLS-336791?logo=postgresql&logoColor=white)
 - Input validation
 - SQL injection prevention
 - XSS protection
 - CORS configuration
 - Rate limiting
-- Error handling
 
-### Audit Logging
-- User activity tracking
-- Security event logging
-- IP address monitoring
-- User agent tracking
-- Timestamp recording
+## 🔍 Error Handling
 
-## Development
-
-### Running Tests
-```bash
-cd APITEST
-npm run test
-```
-
-### Local Network Demo
-Run the demo script to start both frontend and backend servers:
-```bash
-npm run start-demo
-```
-
-This will:
-- Start the API server on port 5000
-- Start the frontend on port 5173
-- Display local and network access URLs
-- Enable sharing on local network
-
-### Building for Production
-```bash
-# Build frontend
-npm run build
-
-# Prepare backend
-cd APITEST
-npm run build
-```
-
-## Error Handling
-
-The API returns consistent error responses:
 ```json
 {
   "message": "Error description",
@@ -305,15 +165,13 @@ The API returns consistent error responses:
 ```
 
 Common error codes:
-- `VALIDATION_ERROR`: Invalid input data
-- `UNAUTHORIZED`: Authentication required
-- `INVALID_CREDENTIALS`: Wrong email/password
-- `TOKEN_EXPIRED`: JWT token expired
-- `INVALID_TOKEN`: Invalid token
-- `NOT_FOUND`: Resource not found
-- `INTERNAL_ERROR`: Server error
+- `USER_EXISTS` ![Status](https://img.shields.io/badge/409-Email_Exists-red)
+- `INVALID_CREDENTIALS` ![Status](https://img.shields.io/badge/401-Invalid_Auth-red)
+- `UNAUTHORIZED` ![Status](https://img.shields.io/badge/401-Auth_Required-red)
+- `NOT_FOUND` ![Status](https://img.shields.io/badge/404-Not_Found-red)
+- `INTERNAL_ERROR` ![Status](https://img.shields.io/badge/500-Server_Error-red)
 
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -321,22 +179,21 @@ Common error codes:
 4. Push to the branch
 5. Create a Pull Request
 
-## License
+## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## 💬 Support
 
 For support, please:
 1. Check the documentation
 2. Search existing issues
 3. Create a new issue if needed
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
-- OpenAI for GPT-4 API
-- Bolt.new for Development
-- Boltsync for Bolt.new workaround
-- React team for React 18
-- Tailwind CSS team
-- All contributors and users
+- OpenAI for GPT-4 API ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-412991?logo=openai&logoColor=white)
+- Supabase team for BaaS platform ![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E?logo=supabase&logoColor=white)
+- React team for React 18 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+- Tailwind CSS team ![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwind-css&logoColor=white)
+- All contributors and users ❤️

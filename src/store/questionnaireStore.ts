@@ -1,27 +1,21 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { QuestionnaireState } from '../types/questionnaire';
 import { api } from '../services/api';
 import { useAuthStore } from './authStore';
+import { supabase } from '../services/supabase';
 
 interface QuestionnaireStore {
-  // Current questionnaire state
   responses: QuestionnaireState;
-  
-  // Loading and error states
   isLoading: boolean;
   error: string | null;
-  
-  // Actions
-  updateBasicInfo: (field: string, value: string) => void;
-  updateBusinessInfo: (field: string, value: string) => void;
-  updateContactInfo: (field: string, value: string) => void;
+  updateBasicInfo: (field: string, value: string) => Promise<void>;
+  updateBusinessInfo: (field: string, value: string) => Promise<void>;
+  updateContactInfo: (field: string, value: string) => Promise<void>;
   saveQuestionnaire: () => Promise<boolean>;
   loadQuestionnaire: () => Promise<boolean>;
-  resetQuestionnaire: () => void;
+  resetQuestionnaire: () => Promise<void>;
 }
 
-// Initial state for the questionnaire
 const initialState: QuestionnaireState = {
   basicInfo: {
     presentationType: 'Business pitch',
@@ -41,131 +35,156 @@ const initialState: QuestionnaireState = {
   }
 };
 
-export const useQuestionnaireStore = create<QuestionnaireStore>()(
-  persist(
-    (set, get) => ({
-      // State
-      responses: initialState,
-      isLoading: false,
-      error: null,
+export const useQuestionnaireStore = create<QuestionnaireStore>()((set, get) => ({
+  responses: initialState,
+  isLoading: false,
+  error: null,
 
-      // Actions
-      updateBasicInfo: (field, value) => {
-        set((state) => ({
-          responses: {
-            ...state.responses,
-            basicInfo: {
-              ...state.responses.basicInfo,
-              [field]: value,
-            },
-          },
-        }));
+  updateBasicInfo: async (field, value) => {
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+
+    set((state) => ({
+      responses: {
+        ...state.responses,
+        basicInfo: {
+          ...state.responses.basicInfo,
+          [field]: value,
+        },
       },
+    }));
 
-      updateBusinessInfo: (field, value) => {
-        set((state) => ({
-          responses: {
-            ...state.responses,
-            businessInfo: {
-              ...state.responses.businessInfo,
-              [field]: value,
-            },
-          },
-        }));
-      },
-
-      updateContactInfo: (field, value) => {
-        set((state) => ({
-          responses: {
-            ...state.responses,
-            contactInfo: {
-              ...state.responses.contactInfo,
-              [field]: value,
-            },
-          },
-        }));
-      },
-
-      saveQuestionnaire: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const { responses } = get();
-          const user = useAuthStore.getState().user;
-          
-          if (!user) {
-            throw new Error('User not authenticated');
-          }
-
-          await api.saveQuestionnaire({
-            userId: user.id,
-            responses,
-          });
-          
-          set({ isLoading: false });
-          return true;
-        } catch (error: any) {
-          set({ 
-            isLoading: false, 
-            error: error.message || 'Failed to save questionnaire' 
-          });
-          return false;
-        }
-      },
-
-      loadQuestionnaire: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const user = useAuthStore.getState().user;
-          
-          if (!user) {
-            throw new Error('User not authenticated');
-          }
-
-          const data = await api.getQuestionnaire(user.id);
-          
-          if (data && data.responses) {
-            set({ 
-              responses: data.responses,
-              isLoading: false 
-            });
-            return true;
-          }
-          
-          set({ isLoading: false });
-          return false;
-        } catch (error: any) {
-          // If 404, it means no questionnaire exists yet, which is fine
-          if (error.status === 404) {
-            set({ isLoading: false });
-            return false;
-          }
-          
-          set({ 
-            isLoading: false, 
-            error: error.message || 'Failed to load questionnaire' 
-          });
-          return false;
-        }
-      },
-
-      resetQuestionnaire: () => {
-        set({ responses: initialState, error: null });
-      },
-    }),
-    {
-      name: 'questionnaire-storage',
-      // Only persist the responses
-      partialize: (state) => ({ responses: state.responses }),
-      // Add version to handle schema changes
-      version: 1,
-      // Add migration to handle old data format
-      migrate: (persistedState: any, version) => {
-        if (version === 0) {
-          // If we have old data format, reset to initial state
-          return { responses: initialState };
-        }
-        return persistedState as { responses: QuestionnaireState };
-      },
+    // Save to Supabase after each update
+    try {
+      await get().saveQuestionnaire();
+    } catch (error) {
+      console.error('Failed to save questionnaire:', error);
     }
-  )
-);
+  },
+
+  updateBusinessInfo: async (field, value) => {
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+
+    set((state) => ({
+      responses: {
+        ...state.responses,
+        businessInfo: {
+          ...state.responses.businessInfo,
+          [field]: value,
+        },
+      },
+    }));
+
+    // Save to Supabase after each update
+    try {
+      await get().saveQuestionnaire();
+    } catch (error) {
+      console.error('Failed to save questionnaire:', error);
+    }
+  },
+
+  updateContactInfo: async (field, value) => {
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+
+    set((state) => ({
+      responses: {
+        ...state.responses,
+        contactInfo: {
+          ...state.responses.contactInfo,
+          [field]: value,
+        },
+      },
+    }));
+
+    // Save to Supabase after each update
+    try {
+      await get().saveQuestionnaire();
+    } catch (error) {
+      console.error('Failed to save questionnaire:', error);
+    }
+  },
+
+  saveQuestionnaire: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const { responses } = get();
+      const user = useAuthStore.getState().user;
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase.rpc('handle_questionnaire', {
+        p_user_id: user.id,
+        p_responses: responses
+      });
+
+      if (error) throw error;
+      
+      set({ isLoading: false });
+      return true;
+    } catch (error: any) {
+      set({ 
+        isLoading: false, 
+        error: error.message || 'Failed to save questionnaire' 
+      });
+      return false;
+    }
+  },
+
+  loadQuestionnaire: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const user = useAuthStore.getState().user;
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data, error } = await supabase
+        .from('questionnaires')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data?.responses) {
+        set({ 
+          responses: data.responses,
+          isLoading: false 
+        });
+        return true;
+      }
+      
+      set({ isLoading: false });
+      return false;
+    } catch (error: any) {
+      set({ 
+        isLoading: false, 
+        error: error.message || 'Failed to load questionnaire' 
+      });
+      return false;
+    }
+  },
+
+  resetQuestionnaire: async () => {
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+
+    set({ responses: initialState, error: null });
+
+    try {
+      const { error } = await supabase
+        .from('questionnaires')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Failed to reset questionnaire:', error);
+    }
+  },
+}));

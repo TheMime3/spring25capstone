@@ -4,17 +4,34 @@ import { LogIn, Mail, Lock } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { useAuthStore } from '../store/authStore';
 import { useApi } from '../hooks/useApi';
+import { api } from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
   const { isAuthenticated, login, logout } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   
   const { execute: executeLogin, error, isLoading, clearError } = useApi(
     async () => login(email, password),
     {
       onSuccess: () => navigate('/dashboard'),
+      retryCount: 1
+    }
+  );
+
+  const { execute: executeResetPassword, error: resetError, isLoading: isResetting } = useApi(
+    async () => api.resetPassword(email),
+    {
+      onSuccess: () => {
+        setResetEmailSent(true);
+        setTimeout(() => {
+          setShowResetPassword(false);
+          setResetEmailSent(false);
+        }, 5000);
+      },
       retryCount: 1
     }
   );
@@ -33,6 +50,18 @@ const Login = () => {
       await executeLogin();
     } catch (error: any) {
       console.error('Login failed:', error);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      return;
+    }
+    try {
+      await executeResetPassword();
+    } catch (error: any) {
+      console.error('Password reset failed:', error);
     }
   };
 
@@ -92,56 +121,120 @@ const Login = () => {
               </div>
             )}
 
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <div>
-                <label htmlFor="email" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
-                  <Mail size={16} className="text-primary mr-2" />
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
-                  placeholder="Email address"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
-                  <Lock size={16} className="text-primary mr-2" />
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
-                  placeholder="Password"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-200 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
-                    Signing in...
+            {showResetPassword ? (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-center mb-4">Reset Password</h2>
+                {resetEmailSent ? (
+                  <div className="bg-green-50 text-green-600 p-4 rounded-md text-center">
+                    Password reset instructions have been sent to your email.
                   </div>
                 ) : (
-                  'SIGN IN'
+                  <>
+                    {resetError && (
+                      <div className="bg-red-50 text-red-500 p-4 rounded-md text-center mb-4">
+                        {resetError.message}
+                      </div>
+                    )}
+                    <form onSubmit={handleResetPassword}>
+                      <div className="mb-4">
+                        <label htmlFor="reset-email" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
+                          <Mail size={16} className="text-primary mr-2" />
+                          Email
+                        </label>
+                        <input
+                          id="reset-email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                          placeholder="Enter your email"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isResetting || !email}
+                        className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isResetting ? (
+                          <div className="flex items-center justify-center">
+                            <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                            Sending...
+                          </div>
+                        ) : (
+                          'Send Reset Instructions'
+                        )}
+                      </button>
+                    </form>
+                  </>
                 )}
-              </button>
-            </form>
+                <button
+                  onClick={() => setShowResetPassword(false)}
+                  className="w-full mt-4 text-primary hover:text-primary-dark font-medium"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            ) : (
+              <form className="space-y-6" onSubmit={handleSubmit}>
+                <div>
+                  <label htmlFor="email" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
+                    <Mail size={16} className="text-primary mr-2" />
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                    placeholder="Email address"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="flex items-center text-sm font-semibold uppercase mb-2 text-black">
+                    <Lock size={16} className="text-primary mr-2" />
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full p-3.5 border border-gray-300 rounded-lg shadow-input focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                    placeholder="Password"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-200 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                      Signing in...
+                    </div>
+                  ) : (
+                    'SIGN IN'
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowResetPassword(true)}
+                  className="w-full text-primary hover:text-primary-dark font-medium"
+                >
+                  Forgot Password?
+                </button>
+              </form>
+            )}
           </div>
         </div>
         

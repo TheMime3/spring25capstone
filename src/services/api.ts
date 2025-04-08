@@ -86,11 +86,11 @@ export class ApiService {
           first_name: firstName,
           last_name: lastName,
         },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
     if (error) {
-      // Check for specific Supabase error codes
       if (error.status === 400 && error.message.includes('already registered')) {
         throw {
           message: 'User already registered',
@@ -113,6 +113,30 @@ export class ApiService {
         lastName: data.user.user_metadata.last_name,
       }
     };
+  }
+
+  public async resetPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return true;
+  }
+
+  public async updatePassword(newPassword: string) {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return true;
   }
 
   public async getProfile() {

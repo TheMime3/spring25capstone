@@ -13,6 +13,7 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [registrationComplete, setRegistrationComplete] = useState(false);
   
   const { execute: executeRegister, error, isLoading, clearError } = useApi(
     async () => {
@@ -22,7 +23,12 @@ const Register = () => {
       await register(firstName, lastName, email, password);
     },
     {
-      onSuccess: () => navigate('/dashboard'),
+      onSuccess: () => {
+        setRegistrationComplete(true);
+        setTimeout(() => {
+          navigate('/login');
+        }, 5000);
+      },
       retryCount: 1
     }
   );
@@ -66,6 +72,31 @@ const Register = () => {
       </div>
     );
   };
+
+  if (registrationComplete) {
+    return (
+      <PageTransition>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-card p-8 text-center">
+            <div className="mb-6">
+              <img 
+                src="/src/logo.jpeg" 
+                alt="Company Logo" 
+                className="h-16 w-16 rounded-full mx-auto"
+              />
+            </div>
+            <h2 className="text-2xl font-bold text-black mb-4">Registration Successful!</h2>
+            <p className="text-gray-600 mb-6">
+              Please check your email to verify your account. A verification link has been sent to {email}.
+            </p>
+            <p className="text-sm text-gray-500">
+              Redirecting to login page...
+            </p>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
 
   return (
     <PageTransition>

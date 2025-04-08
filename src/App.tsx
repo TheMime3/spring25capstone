@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AnimatePresence } from 'framer-motion';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import Questionnaire from './pages/Questionnaire';
@@ -18,6 +19,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={
               <PrivateRoute>
                 <Dashboard />

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { LogOut, User, ClipboardList, Sparkles, Clock, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,12 +9,17 @@ import { useScriptHistoryStore } from '../store/scriptHistoryStore';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { scripts } = useScriptHistoryStore();
+  const { scripts, getScripts } = useScriptHistoryStore();
   
   const { execute: executeLogout, isLoading } = useApi(logout, {
     onSuccess: () => navigate('/login'),
     retryCount: 1
   });
+
+  // Load scripts when component mounts
+  useEffect(() => {
+    getScripts().catch(console.error);
+  }, [getScripts]);
 
   const handleLogout = () => {
     executeLogout();

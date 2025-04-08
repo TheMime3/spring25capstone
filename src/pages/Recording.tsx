@@ -1,8 +1,9 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Video, Mic, StopCircle, PlayCircle, AlertCircle, ArrowLeft, Download, RefreshCw, Pause, Play } from 'lucide-react';
+import { Video, Mic, StopCircle, PlayCircle, AlertCircle, ArrowLeft, Download, RefreshCw, Pause, Play, Upload } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { useScriptHistoryStore } from '../store/scriptHistoryStore';
+import { useVideoStore } from '../store/videoStore';
 
 interface RecordingState {
   isRecording: boolean;
@@ -15,6 +16,7 @@ interface RecordingState {
 const Recording = () => {
   const navigate = useNavigate();
   const { scripts } = useScriptHistoryStore();
+  const { uploadVideo } = useVideoStore();
   const selectedScript = scripts[0]; // For now, using the latest script
 
   // Refs
@@ -24,6 +26,7 @@ const Recording = () => {
   const teleprompterRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number>(0);
   const scrollStartTimeRef = useRef<number>(0);
+  const recordedBlobRef = useRef<Blob | null>(null);
 
   // State
   const [state, setState] = useState<RecordingState>({
@@ -36,6 +39,7 @@ const Recording = () => {
   const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentWord, setCurrentWord] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
   const [hasPermissions, setHasPermissions] = useState<{video: boolean, audio: boolean}>({
     video: false,
     audio: false,
@@ -132,11 +136,9 @@ const Recording = () => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
+        recordedBlobRef.current = blob;
         const url = URL.createObjectURL(blob);
         setRecordedVideo(url);
-        
-        // Store in IndexedDB
-        // This would be implemented in a separate storage service
         
         stream.getTracks().forEach(track => track.stop());
       };
@@ -182,6 +184,7 @@ const Recording = () => {
   // Reset everything
   const resetRecording = useCallback(() => {
     setRecordedVideo(null);
+    recordedBlobRef.current = null;
     setState({
       isRecording: false,
       isPaused: false,
@@ -199,6 +202,34 @@ const Recording = () => {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
   }, []);
+
+  // Handle video upload
+  const handleUpload = async () => {
+    if (!recordedBlobRef.current || !selectedScript) return;
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const file = new File([recordedBlobRef.current], 'recording.webm', {
+        type: 'video/webm'
+      });
+
+      await uploadVideo({
+        file,
+        title: `${selectedScript.title || 'Untitled Script'} - Recording`,
+        description: 'Recorded using Presentation Coach',
+        scriptId: selectedScript.id
+      });
+
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setError('Failed to upload video. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Cleanup
   useEffect(() => {
@@ -326,14 +357,23 @@ const Recording = () => {
                       Record Again
                     </button>
                     
-                    <a
-                      href={recordedVideo}
-                      download="recorded-video.webm"
-                      className="flex items-center gap-2 bg-green-500 hover:bg-green-600 px-6 py-3 rounded-lg font-medium transition-colors"
+                    <button
+                      onClick={handleUpload}
+                      disabled={isUploading}
+                      className="flex items-center gap-2 bg-green-500 hover:bg-green-600 px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Download className="w-5 h-5" />
-                      Download Recording
-                    </a>
+                      {isUploading ? (
+                        <>
+                          <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-5 h-5" />
+                          Upload Recording
+                        </>
+                      )}
+                    </button>
                   </>
                 )}
               </div>

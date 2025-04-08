@@ -1,25 +1,31 @@
 import { useEffect } from 'react';
-import { useAuthStore } from '../store/authStore';
-import { LogOut, User, ClipboardList, Sparkles, Clock, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { LogOut, User, ClipboardList, Sparkles, Clock, Video } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
 import { useApi } from '../hooks/useApi';
 import PageTransition from '../components/PageTransition';
 import { useScriptHistoryStore } from '../store/scriptHistoryStore';
+import VideoList from '../components/VideoList';
+import { useVideoStore } from '../store/videoStore';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { scripts, getScripts } = useScriptHistoryStore();
+  const { videos, getVideos } = useVideoStore();
   
   const { execute: executeLogout, isLoading } = useApi(logout, {
     onSuccess: () => navigate('/login'),
     retryCount: 1
   });
 
-  // Load scripts when component mounts
+  // Load scripts and videos when component mounts
   useEffect(() => {
-    getScripts().catch(console.error);
-  }, [getScripts]);
+    Promise.all([
+      getScripts(),
+      getVideos()
+    ]).catch(console.error);
+  }, [getScripts, getVideos]);
 
   const handleLogout = () => {
     executeLogout();
@@ -186,6 +192,24 @@ const Dashboard = () => {
                       </div>
                     </div>
                   </div>
+
+                  {videos.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                      <div className="flex items-start">
+                        <div className="bg-primary/10 p-3 rounded-full mr-4">
+                          <Video className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-black mb-2">Your Recorded Videos</h4>
+                          <p className="text-black mb-4">
+                            You have {videos.length} recorded video{videos.length !== 1 ? 's' : ''}.
+                            Share them with others or watch them again.
+                          </p>
+                          <VideoList />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
               

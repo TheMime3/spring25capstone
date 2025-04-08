@@ -7,7 +7,7 @@ interface ScriptGeneratorStore {
   responses: ScriptGeneratorState;
   isLoading: boolean;
   error: string | null;
-  updateResponse: (field: string, value: string) => Promise<void>;
+  updateResponse: (field: string, value: string) => void;
   saveResponses: () => Promise<boolean>;
   loadResponses: () => Promise<boolean>;
   resetResponses: () => Promise<void>;
@@ -28,23 +28,13 @@ export const useScriptGeneratorStore = create<ScriptGeneratorStore>()((set, get)
   isLoading: false,
   error: null,
 
-  updateResponse: async (field, value) => {
-    const user = useAuthStore.getState().user;
-    if (!user) return;
-
+  updateResponse: (field, value) => {
     set((state) => ({
       responses: {
         ...state.responses,
         [field]: value,
       },
     }));
-
-    // Save to Supabase after each update
-    try {
-      await get().saveResponses();
-    } catch (error) {
-      console.error('Failed to save responses:', error);
-    }
   },
 
   saveResponses: async () => {

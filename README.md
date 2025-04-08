@@ -28,7 +28,8 @@ A comprehensive platform that helps business owners create, practice, and perfec
 - Context-aware content creation
 - Industry-specific terminology
 - Customizable tone and style
-- Script version history
+- Script version history and management
+- Multiple script storage and retrieval
 
 ### 🎥 Professional Recording Studio
 - Built-in teleprompter
@@ -37,12 +38,14 @@ A comprehensive platform that helps business owners create, practice, and perfec
 - Word highlighting
 - Recording pause/resume
 - Multiple take management
+- Video preview and download
 
-### 🔐 User Authentication
+### 🔐 User Authentication & Security
 - Secure authentication via Supabase Auth
 - Email/password authentication
 - User profile management
 - Session handling
+- Row Level Security (RLS)
 - Audit logging
 
 ## 🛠️ Technical Stack
@@ -109,6 +112,29 @@ CREATE TABLE questionnaires (
 );
 ```
 
+### Scripts Table
+```sql
+CREATE TABLE scripts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    title TEXT,
+    "createdAt" TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### Script Responses Table
+```sql
+CREATE TABLE script_responses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    responses JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT script_responses_user_id_key UNIQUE (user_id)
+);
+```
+
 ### Audit Logs Table
 ```sql
 CREATE TABLE audit_logs (
@@ -136,6 +162,8 @@ CREATE TABLE audit_logs (
 - POST `/functions/v1/questionnaire` - Save questionnaire responses
 - GET `/functions/v1/questionnaire` - Get user's questionnaire
 - POST `/functions/v1/script` - Generate AI script
+- GET `/functions/v1/scripts` - Get user's scripts
+- DELETE `/functions/v1/scripts/{id}` - Delete a script
 </details>
 
 ## 🛡️ Security Measures
@@ -145,6 +173,7 @@ CREATE TABLE audit_logs (
 - Row Level Security (RLS)
 - Session management
 - Access control
+- User-specific data isolation
 
 ### Data Protection
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-RLS-336791?logo=postgresql&logoColor=white)
@@ -153,6 +182,7 @@ CREATE TABLE audit_logs (
 - XSS protection
 - CORS configuration
 - Rate limiting
+- Data encryption at rest
 
 ## 🔍 Error Handling
 

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { GeneratedScript, ScriptHistoryState } from '../types/scriptGenerator';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../services/supabase';
+import { useAuthStore } from './authStore';
 
 interface ScriptHistoryStore extends ScriptHistoryState {
   isLoading: boolean;
@@ -30,8 +31,14 @@ export const useScriptHistoryStore = create<ScriptHistoryStore>()((set, get) => 
     set({ isLoading: true, error: null });
     
     try {
-      const newScript: GeneratedScript = {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const newScript = {
         id: uuidv4(),
+        user_id: user.id, // Add user_id to match RLS policy
         content,
         createdAt: new Date().toISOString(),
         title: title || `Script ${get().scripts.length + 1}`
@@ -61,10 +68,16 @@ export const useScriptHistoryStore = create<ScriptHistoryStore>()((set, get) => 
     set({ isLoading: true, error: null });
     
     try {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const { data, error } = await supabase
         .from('scripts')
         .select('*')
-        .order('created_at', { ascending: false });
+        .eq('user_id', user.id) // Filter by user_id
+        .order('createdAt', { ascending: false });
 
       if (error) throw error;
 
@@ -79,10 +92,16 @@ export const useScriptHistoryStore = create<ScriptHistoryStore>()((set, get) => 
     set({ isLoading: true, error: null });
     
     try {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const { error } = await supabase
         .from('scripts')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id); // Ensure user can only delete their own scripts
 
       if (error) throw error;
 
@@ -100,10 +119,15 @@ export const useScriptHistoryStore = create<ScriptHistoryStore>()((set, get) => 
     set({ isLoading: true, error: null });
     
     try {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const { error } = await supabase
         .from('scripts')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+        .eq('user_id', user.id); // Only clear user's own scripts
 
       if (error) throw error;
 

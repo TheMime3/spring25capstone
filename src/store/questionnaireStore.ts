@@ -8,9 +8,9 @@ interface QuestionnaireStore {
   responses: QuestionnaireState;
   isLoading: boolean;
   error: string | null;
-  updateBasicInfo: (field: string, value: string) => Promise<void>;
-  updateBusinessInfo: (field: string, value: string) => Promise<void>;
-  updateContactInfo: (field: string, value: string) => Promise<void>;
+  updateBasicInfo: (field: string, value: string) => void;
+  updateBusinessInfo: (field: string, value: string) => void;
+  updateContactInfo: (field: string, value: string) => void;
   saveQuestionnaire: () => Promise<boolean>;
   loadQuestionnaire: () => Promise<boolean>;
   resetQuestionnaire: () => Promise<void>;
@@ -40,10 +40,7 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()((set, get) => 
   isLoading: false,
   error: null,
 
-  updateBasicInfo: async (field, value) => {
-    const user = useAuthStore.getState().user;
-    if (!user) return;
-
+  updateBasicInfo: (field, value) => {
     set((state) => ({
       responses: {
         ...state.responses,
@@ -53,19 +50,9 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()((set, get) => 
         },
       },
     }));
-
-    // Save to Supabase after each update
-    try {
-      await get().saveQuestionnaire();
-    } catch (error) {
-      console.error('Failed to save questionnaire:', error);
-    }
   },
 
-  updateBusinessInfo: async (field, value) => {
-    const user = useAuthStore.getState().user;
-    if (!user) return;
-
+  updateBusinessInfo: (field, value) => {
     set((state) => ({
       responses: {
         ...state.responses,
@@ -75,19 +62,9 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()((set, get) => 
         },
       },
     }));
-
-    // Save to Supabase after each update
-    try {
-      await get().saveQuestionnaire();
-    } catch (error) {
-      console.error('Failed to save questionnaire:', error);
-    }
   },
 
-  updateContactInfo: async (field, value) => {
-    const user = useAuthStore.getState().user;
-    if (!user) return;
-
+  updateContactInfo: (field, value) => {
     set((state) => ({
       responses: {
         ...state.responses,
@@ -97,13 +74,6 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()((set, get) => 
         },
       },
     }));
-
-    // Save to Supabase after each update
-    try {
-      await get().saveQuestionnaire();
-    } catch (error) {
-      console.error('Failed to save questionnaire:', error);
-    }
   },
 
   saveQuestionnaire: async () => {

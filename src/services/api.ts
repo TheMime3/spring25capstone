@@ -87,7 +87,7 @@ export class ApiService {
           last_name: lastName,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      }
     });
 
     if (error) {

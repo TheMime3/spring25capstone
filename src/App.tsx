@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
+import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import Questionnaire from './pages/Questionnaire';
@@ -19,6 +20,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={
               <PrivateRoute>

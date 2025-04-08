@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { LogIn, Mail, Lock, CheckCircle } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { useAuthStore } from '../store/authStore';
 import { useApi } from '../hooks/useApi';
 import { api } from '../services/api';
+import { supabase } from '../services/supabase';
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, login, logout } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
   
   const { execute: executeLogin, error, isLoading, clearError } = useApi(
     async () => login(email, password),
@@ -35,6 +38,37 @@ const Login = () => {
       retryCount: 1
     }
   );
+
+  useEffect(() => {
+    const verifyEmail = async () => {
+      const tokenHash = searchParams.get('token_hash');
+      const type = searchParams.get('type');
+
+      if (tokenHash && type === 'signup') {
+        try {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: 'signup'
+          });
+
+          if (error) throw error;
+          setVerificationSuccess(true);
+          
+          // Clear the URL parameters
+          window.history.replaceState({}, '', '/login');
+          
+          // Show success message for 3 seconds
+          setTimeout(() => {
+            setVerificationSuccess(false);
+          }, 3000);
+        } catch (error) {
+          console.error('Error verifying email:', error);
+        }
+      }
+    };
+
+    verifyEmail();
+  }, [searchParams]);
 
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
@@ -69,6 +103,9 @@ const Login = () => {
     if (error?.message === 'Invalid login credentials') {
       return 'Invalid email or password. Please try again.';
     }
+    if (error?.message === 'Email not confirmed') {
+      return 'Please verify your email address before logging in. Check your inbox for the confirmation link.';
+    }
     if (error?.message === 'Failed to retrieve user profile') {
       return 'Unable to retrieve your profile. Please ensure your account is properly set up or contact support.';
     }
@@ -80,6 +117,22 @@ const Login = () => {
     }
     return error?.message || 'An error occurred during login. Please try again.';
   };
+
+  if (verificationSuccess) {
+    return (
+      <PageTransition>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-card p-8 text-center">
+            <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+            <h2 className="text-2xl font-bold text-black mb-4">Email Verified!</h2>
+            <p className="text-gray-600 mb-6">
+              Your email has been successfully verified. You can now sign in to your account.
+            </p>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
 
   return (
     <PageTransition>

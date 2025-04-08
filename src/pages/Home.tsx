@@ -6,22 +6,21 @@ const Home = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-gray-50 font-sans">
-        {/* Header bar */}
         <div className="bg-primary p-4 flex items-center justify-between shadow-md">
           <div className="flex items-center">
             <img 
-              src="/src/logo.jpeg" 
+              src="/logo.jpeg" 
               alt="Company Logo" 
               className="h-10 w-10 rounded-full"
             />
           </div>
           <div className="text-white text-sm font-medium tracking-wide">PRESENTATION COACH</div>
-          <div className="w-10"></div> {/* Spacer for balance */}
+          <div className="w-10"></div>
         </div>
         
         <div className="max-w-4xl mx-auto py-16 px-6 text-center">
           <img 
-            src="/src/logo.jpeg" 
+            src="/logo.jpeg" 
             alt="Company Logo" 
             className="mx-auto h-24 w-24 rounded-full border-4 border-primary mb-8"
           />
@@ -50,7 +49,6 @@ const Home = () => {
           </div>
         </div>
         
-        {/* Decorative element */}
         <div className="fixed right-0 bottom-1/4 w-4 h-4 bg-primary rounded-full opacity-60"></div>
       </div>
     </PageTransition>

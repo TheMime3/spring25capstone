@@ -140,7 +140,7 @@ const Login = () => {
         <div className="bg-primary p-4 flex items-center justify-between shadow-md">
           <div className="flex items-center">
             <img 
-              src="/src/logo.jpeg" 
+              src="/logo.jpeg" 
               alt="Company Logo" 
               className="h-10 w-10 rounded-full"
             />
@@ -153,7 +153,7 @@ const Login = () => {
           <div className="bg-white rounded-xl shadow-card p-8 mb-8">
             <div className="flex justify-center mb-6">
               <img 
-                src="/src/logo.jpeg" 
+                src="/logo.jpeg" 
                 alt="Company Logo" 
                 className="h-16 w-16 rounded-full"
               />

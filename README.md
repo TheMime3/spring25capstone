@@ -13,7 +13,7 @@
 Presentation Coach helps business owners create, practice, and perfect their business presentations by leveraging AI-generated scripts and advanced recording capabilities, solving the challenge of creating engaging video content while saving time and improving presentation quality.
 
 <div align="center">
-  <img src="src/logo.jpeg" alt="Presentation Coach Logo" width="150" height="150" style="border-radius: 20px;">
+  <img src="public/logo.jpeg" alt="Presentation Coach Logo" width="150" height="150" style="border-radius: 20px;">
 </div>
 
 ## Problem Statement

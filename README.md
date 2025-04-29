@@ -22,7 +22,7 @@ Small business owners struggle to create engaging video content that effectively
 
 ## ISBA Subfields
 
-1. **Information Systems**
+1. **Application Development**
    - Custom-built web application using React and TypeScript
    - Integration with Supabase for secure data management
    - WebRTC implementation for video recording
@@ -32,7 +32,7 @@ Small business owners struggle to create engaging video content that effectively
    - User behavior tracking and analytics
    - Performance metrics for video engagement
 
-3. **Software Development**
+3. **Data Engineering**
    - Full-stack development with modern web technologies
    - Secure authentication and authorization
    - Cloud storage integration for video assets
@@ -129,6 +129,11 @@ Small business owners struggle to create engaging video content that effectively
    - Feedback system
 
 ## Retrospective
+
+1. **Challenge**
+    - Integrating video recording in-browser; solved via [insert library/tool]
+2. **Lesson Learned**
+    - The importance of user flow mapping before coding—saved us major rework
 
 ### Challenges & Solutions
 

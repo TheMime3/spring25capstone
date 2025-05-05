@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import Home from './pages/Home';
 import Questionnaire from './pages/Questionnaire';
 import ScriptGenerator from './pages/ScriptGenerator';
@@ -22,6 +23,11 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
+            <Route path="/admin" element={
+              <PrivateRoute>
+                <AdminDashboard />
+              </PrivateRoute>
+            } />
             <Route path="/dashboard" element={
               <PrivateRoute>
                 <Dashboard />
@@ -51,4 +57,4 @@ function App() {
   );
 }
 
-export default App;
+export default App
